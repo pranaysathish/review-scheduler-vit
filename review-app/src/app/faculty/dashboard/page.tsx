@@ -8,7 +8,10 @@ import LogoutButton from '@/components/auth/logout-button';
 import { parseTimetableSlots, getAllFreeSlots, FreeSlot, Schedule, splitAllSlotsByDuration } from '@/utils/timetable-parser';
 import CreateClassroomForm from '@/components/faculty/create-classroom-form';
 import ClassroomDetailsModal from '@/components/faculty/classroom-details-modal';
+import SimpleDateSelector from '@/components/faculty/simple-date-selector';
+import DateBasedSlots from '@/components/faculty/date-based-slots';
 import ActivityFeed from '@/components/shared/activity-feed';
+import { formatDateForInput } from '@/lib/utils';
 
 export default function FacultyDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -44,6 +47,12 @@ export default function FacultyDashboard() {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState(false);
   const [publishMessage, setPublishMessage] = useState('');
+  
+  // New workflow state
+  const [showDateSelector, setShowDateSelector] = useState(false);
+  const [showSlotSelector, setShowSlotSelector] = useState(false);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [slotsWithDates, setSlotsWithDates] = useState<Array<FreeSlot & { slot_date: Date }>>([]);
 
   // Function to check if a slot is selected
   const isSlotSelected = (day: string, time: string, endTime: string) => {
@@ -161,40 +170,71 @@ export default function FacultyDashboard() {
               console.log(`Manual count for ${classroom.name}:`, studentCount);
             }
             
+            // Ensure we properly count teams
+            let teamsCount = 0;
+            
+            // Try multiple approaches to get the team count
+            if (classroom.teams?.count !== undefined) {
+              teamsCount = classroom.teams.count;
+            } else if (classroom.teams && Array.isArray(classroom.teams)) {
+              teamsCount = classroom.teams.length;
+            }
+            
+            // We'll set a default of 0 and let the direct query update it
+            // This ensures new classrooms start with 0 teams
+            teamsCount = 0;
+            
+            console.log(`Teams count for ${classroom.name}:`, teamsCount);
+            
             return {
               ...classroom,
-              teams_count: classroom.teams?.count || 0,
+              teams_count: teamsCount,
               students_count: studentCount
             };
           }) || [];
           
-          // After processing classrooms, fetch student counts directly
-          const fetchStudentCounts = async () => {
+          // After processing classrooms, fetch accurate student and team counts directly
+          const fetchAccurateCounts = async () => {
             try {
               for (const classroom of processedClassrooms) {
                 // Direct query for classroom students
-                const { data: students, error } = await supabase
+                const { data: students, error: studentError } = await supabase
                   .from('classroom_students')
                   .select('*')
                   .eq('classroom_id', classroom.id);
                   
-                if (!error && students) {
+                if (!studentError && students) {
                   // Update the classroom with the actual student count
                   classroom.students_count = students.length;
                   console.log(`Direct student count for ${classroom.name}:`, students.length);
-                  console.log('Student data:', students);
+                }
+                
+                // Direct query for teams in this classroom
+                const { data: teams, error: teamError } = await supabase
+                  .from('teams')
+                  .select('*')
+                  .eq('classroom_id', classroom.id);
+                  
+                if (!teamError && teams) {
+                  // Update the classroom with the actual team count
+                  classroom.teams_count = teams.length;
+                  console.log(`Direct team count for ${classroom.name}:`, teams.length);
+                  console.log('Team data:', teams);
+                } else {
+                  // If there's an error or no teams, set count to 0
+                  classroom.teams_count = 0;
                 }
               }
               
               // Update the state with the corrected data
               setClassrooms([...processedClassrooms]);
             } catch (error) {
-              console.error('Error fetching student counts:', error);
+              console.error('Error fetching accurate counts:', error);
             }
           };
           
-          // Execute the student count fetch
-          fetchStudentCounts();
+          // Execute the fetch for accurate counts
+          fetchAccurateCounts();
           
           // Initial set of classrooms before the fetch completes
           setClassrooms(processedClassrooms);
@@ -445,7 +485,7 @@ export default function FacultyDashboard() {
               </motion.div>
 
               {/* Stats grid */}
-              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="p-3 bg-indigo-900/30 rounded-lg">
@@ -468,19 +508,6 @@ export default function FacultyDashboard() {
                     {classrooms.reduce((sum, classroom) => sum + (classroom.students_count || 0), 0)}
                   </h3>
                   <p className="text-gray-400 text-sm">Students</p>
-                </div>
-                
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-amber-900/30 rounded-lg">
-                      <Users className="text-amber-400" size={24} />
-                    </div>
-                    <span className="text-xs text-gray-500">Total</span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">
-                    {classrooms.reduce((sum, classroom) => sum + (classroom.teams_count || 0), 0)}
-                  </h3>
-                  <p className="text-gray-400 text-sm">Teams</p>
                 </div>
                 
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
@@ -588,37 +615,60 @@ export default function FacultyDashboard() {
               </motion.div>
 
               {/* Timetable upload */}
-              <motion.div variants={itemVariants} className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold mb-2">Parse Timetable</h3>
-                  <p className="text-gray-400 text-sm">
-                    Copy and paste your VIT timetable text here. The system will automatically identify your free slots.
-                  </p>
+              <motion.div
+                variants={itemVariants}
+                className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden max-w-3xl mx-auto"
+              >
+                <div className="border-b border-gray-800 p-3 flex justify-between items-center">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Upload size={16} className="text-indigo-400" />
+                    Parse Timetable
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={reviewDuration}
+                      onChange={(e) => {
+                        setReviewDuration(e.target.value);
+                        if (allFreeSlots.length > 0) {
+                          const duration = parseInt(e.target.value, 10);
+                          const splitSlots = splitAllSlotsByDuration(allFreeSlots, duration);
+                          setSplitFreeSlots(splitSlots);
+                        }
+                      }}
+                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white"
+                    >
+                      <option value="5">5 min</option>
+                      <option value="10">10 min</option>
+                      <option value="15">15 min</option>
+                      <option value="20">20 min</option>
+                      <option value="30">30 min</option>
+                    </select>
+                  </div>
                 </div>
-
-                <div className="space-y-4">
-                  <textarea
-                    value={timetableText}
-                    onChange={(e) => setTimetableText(e.target.value)}
-                    className="w-full h-40 bg-gray-800 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="Paste your timetable text here..."
-                  />
-
-                  <div className="flex justify-end">
+                
+                <div className="p-3">
+                  <div className="text-xs text-gray-400 mb-2">
+                    Copy and paste your VIT timetable text here. The system will automatically identify your free slots.
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <textarea
+                      value={timetableText}
+                      onChange={(e) => setTimetableText(e.target.value)}
+                      className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg p-2 text-white font-mono text-xs"
+                      placeholder="Paste your timetable here..."
+                    />
                     <button
                       onClick={() => {
                         try {
-                          setParseError(null);
+                          setParseError('');
                           setParseSuccess(false);
                           
-                          if (!timetableText.trim()) {
-                            setParseError('Please paste your timetable text first');
-                            return;
-                          }
-                          
+                          // Parse the timetable
                           const schedule = parseTimetableSlots(timetableText);
                           setParsedSchedule(schedule);
                           
+                          // Get all free slots
                           const freeSlots = getAllFreeSlots(schedule);
                           setAllFreeSlots(freeSlots);
                           
@@ -632,144 +682,36 @@ export default function FacultyDashboard() {
                           setParseError('Failed to parse timetable. Please check the format and try again.');
                         }
                       }}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+                      className="bg-indigo-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 hover:bg-indigo-700 transition-colors h-24 whitespace-nowrap"
                     >
-                      <Upload size={18} />
-                      Parse Timetable
+                      <Upload size={16} />
+                      Parse
                     </button>
                   </div>
 
                   {parseError && (
-                    <div className="flex items-center gap-2 text-red-400 bg-red-900/20 p-3 rounded-lg">
-                      <AlertCircle size={18} />
+                    <div className="mt-2 flex items-center gap-2 text-red-400 bg-red-900/20 p-2 rounded-lg text-xs">
+                      <AlertCircle size={14} />
                       <span>{parseError}</span>
                     </div>
                   )}
-
+                  
+                  {/* Success message and form */}
                   {parseSuccess && (
-                    <div className="flex items-center gap-2 text-green-400 bg-green-900/20 p-3 rounded-lg">
-                      <CheckCircle size={18} />
-                      <span>Timetable parsed successfully! {allFreeSlots.length} free slots found.</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-
-              {allFreeSlots.length > 0 && (
-                <motion.div 
-                  variants={itemVariants}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                >
-                  {/* Available Slots List */}
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                    <div className="border-b border-gray-800 p-3 flex justify-between items-center">
-                      <h3 className="text-xl font-bold">Available Slots</h3>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-gray-400">Duration:</label>
-                        <select
-                          value={reviewDuration}
-                          onChange={(e) => setReviewDuration(e.target.value)}
-                          className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white"
-                        >
-                          <option value="10">10 min</option>
-                          <option value="15">15 min</option>
-                          <option value="20">20 min</option>
-                          <option value="30">30 min</option>
-                          <option value="45">45 min</option>
-                          <option value="60">60 min</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
-                        {splitFreeSlots.length === 0 ? (
-                          <div className="text-center py-4 text-gray-400">
-                            <Clock size={24} className="mx-auto mb-2 text-gray-600" />
-                            No slots available with the selected duration
-                          </div>
-                        ) : (
-                          splitFreeSlots.map((slot, index) => {
-                            const isSelected = isSlotSelected(slot.day, slot.start, slot.end);
-                            const slotKey = `${slot.day}-${slot.start || ''}-${slot.end || ''}`;
-                            const isHighlighted = highlightedSlot === slotKey;
-                            
-                            return (
-                              <div
-                                key={index}
-                                className={`p-2 border rounded-lg flex justify-between items-center cursor-pointer transition-colors ${isSelected
-                                  ? 'bg-indigo-900/30 border-indigo-700 text-indigo-300'
-                                  : isHighlighted
-                                  ? 'bg-gray-800 border-gray-700 text-white'
-                                  : 'bg-gray-800/50 border-gray-700/50 text-gray-300 hover:bg-gray-800 hover:border-gray-700'
-                                }`}
-                                onClick={() => toggleSlotSelection(slot.day, slot.start, slot.end, true)}
-                                onMouseEnter={() => setHighlightedSlot(slotKey || null)}
-                                onMouseLeave={() => setHighlightedSlot(null)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-3 h-3 rounded-full ${isSelected ? 'bg-indigo-500' : 'bg-gray-600'}`}></div>
-                                  <span className="text-sm">
-                                    {slot.day}, {slot.start} - {slot.end}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {parseInt(reviewDuration)} min
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
+                    <div className="mt-3 space-y-3">
+                      <div className="flex items-center gap-2 text-green-400 text-xs bg-green-900/20 p-2 rounded-lg">
+                        <CheckCircle size={14} />
+                        <span>Timetable parsed successfully! {allFreeSlots.length} free slots found</span>
                       </div>
                       
-                      <div className="mt-3 pt-3 border-t border-gray-800 flex justify-between items-center text-sm">
-                        <div className="text-gray-400">
-                          {selectedSlots.length} slots selected
-                        </div>
-                        <button
-                          onClick={() => setSelectedSlots([])}
-                          className="text-red-400 hover:text-red-300"
-                          disabled={selectedSlots.length === 0}
-                        >
-                          Clear Selection
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Publish Slots Form */}
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                    <div className="border-b border-gray-800 p-3">
-                      <h3 className="font-bold text-sm flex items-center gap-2">
-                        <Calendar size={14} className="text-indigo-400" />
-                        Publish Review Slots
-                      </h3>
-                    </div>
-                    <div className="p-3">
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Classroom Selection */}
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
-                            Review Stage
-                          </label>
+                          <label className="text-xs text-gray-400 mb-1 block">Classroom</label>
                           <select
-                            value={reviewStage}
-                            onChange={(e) => setReviewStage(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
-                          >
-                            <option value="Review 1">Review 1</option>
-                            <option value="Review 2">Review 2</option>
-                            <option value="Review 3">Review 3</option>
-                            <option value="Final Review">Final Review</option>
-                          </select>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-xs text-gray-400 mb-1">
-                            Classroom
-                          </label>
-                          <select
-                            value={selectedClassroomId}
+                            value={selectedClassroomId || ''}
                             onChange={(e) => setSelectedClassroomId(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
                           >
                             <option value="">Select a classroom</option>
                             {classrooms.map((classroom) => (
@@ -780,92 +722,151 @@ export default function FacultyDashboard() {
                           </select>
                         </div>
                         
+                        {/* Review Stage */}
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
-                            Booking Deadline
-                          </label>
-                          <input
-                            type="date"
-                            value={bookingDeadline}
-                            onChange={(e) => setBookingDeadline(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
-                          />
-                        </div>
-                        
-                        <div className="pt-2">
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`w-full py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 ${
-                              selectedSlots.length > 0 && selectedClassroomId && bookingDeadline
-                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                                : 'bg-gray-700 text-gray-300 cursor-not-allowed'
-                            }`}
-                            disabled={!(selectedSlots.length > 0 && selectedClassroomId && bookingDeadline)}
-                            onClick={async () => {
-                              try {
-                                setPublishSuccess(false);
-                                setPublishError(false);
-                                setPublishMessage('');
-                                
-                                if (!(selectedSlots.length > 0 && selectedClassroomId && bookingDeadline)) {
-                                  return;
-                                }
-                                
-                                // Create slots in the database
-                                const { data, error } = await supabase
-                                  .from('slots')
-                                  .insert(
-                                    selectedSlots.map(slot => ({
-                                      day: slot.day,
-                                      start_time: slot.start,
-                                      end_time: slot.end,
-                                      duration: parseInt(reviewDuration),
-                                      classroom_id: selectedClassroomId,
-                                      review_stage: reviewStage,
-                                      booking_deadline: bookingDeadline,
-                                      is_available: true
-                                    }))
-                                  );
-                                
-                                if (error) {
-                                  throw error;
-                                }
-                                
-                                setPublishSuccess(true);
-                                setPublishMessage(`Successfully published ${selectedSlots.length} review slots!`);
-                                setSelectedSlots([]);
-                                fetchReviewSlots();
-                              } catch (error) {
-                                console.error('Error publishing slots:', error);
-                                setPublishError(true);
-                                setPublishMessage('Failed to publish slots. Please try again.');
-                              }
-                            }}
+                          <label className="text-xs text-gray-400 mb-1 block">Review Stage</label>
+                          <select
+                            value={reviewStage}
+                            onChange={(e) => setReviewStage(e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
                           >
-                            <Calendar size={16} />
-                            Publish {selectedSlots.length} Slots
-                          </motion.button>
+                            <option value="Review 1">Review 1</option>
+                            <option value="Review 2">Review 2</option>
+                            <option value="Review 3">Review 3</option>
+                          </select>
                         </div>
-                        
-                        {publishSuccess && (
-                          <div className="mt-2 flex items-center gap-2 text-green-400 bg-green-900/20 p-3 rounded-lg">
-                            <CheckCircle size={18} />
-                            <span>{publishMessage}</span>
-                          </div>
-                        )}
-                        
-                        {publishError && (
-                          <div className="mt-2 flex items-center gap-2 text-red-400 bg-red-900/20 p-3 rounded-lg">
-                            <AlertCircle size={18} />
-                            <span>{publishMessage}</span>
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* Booking Deadline */}
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Booking Deadline</label>
+                        <input
+                          type="date"
+                          value={bookingDeadline || ''}
+                          onChange={(e) => setBookingDeadline(e.target.value)}
+                          className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                        />
+                      </div>
+                      
+                      {/* Button to proceed to date selection */}
+                      <button
+                        onClick={() => {
+                          if (allFreeSlots.length > 0 && selectedClassroomId && bookingDeadline) {
+                            setSelectedDates([]);
+                            setSlotsWithDates([]);
+                            setShowDateSelector(true);
+                          }
+                        }}
+                        disabled={!(allFreeSlots.length > 0 && selectedClassroomId && bookingDeadline)}
+                        className={`w-full py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 ${
+                          allFreeSlots.length > 0 && selectedClassroomId && bookingDeadline
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            : 'bg-gray-800 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <Calendar size={16} />
+                        Select Dates for Publishing
+                      </button>
                     </div>
-                  </div>
+                  )}
+                </div>
+              </motion.div>
+
+              {allFreeSlots.length > 0 && (
+                <motion.div 
+                  variants={itemVariants}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
                 </motion.div>
               )}
+              
+              {/* Date Selector Modal - Step 1: Select Dates */}
+              <AnimatePresence>
+                {showDateSelector && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto"
+                  >
+                    <div className="w-full max-w-4xl">
+                      <SimpleDateSelector
+                        initialDuration={parseInt(reviewDuration)}
+                        onDatesSelected={(dates, duration) => {
+                          setSelectedDates(dates);
+                          setReviewDuration(duration.toString());
+                          setShowDateSelector(false);
+                          setShowSlotSelector(true);
+                        }}
+                        onCancel={() => setShowDateSelector(false)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Slot Selector Modal - Step 2: Select Slots for Dates */}
+              <AnimatePresence>
+                {showSlotSelector && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto"
+                  >
+                    <div className="w-full max-w-4xl">
+                      <DateBasedSlots
+                        selectedDates={selectedDates}
+                        allFreeSlots={splitFreeSlots}
+                        reviewDuration={reviewDuration}
+                        onSlotsSelected={async (selectedSlotsWithDates) => {
+                          try {
+                            setShowSlotSelector(false);
+                            setPublishSuccess(false);
+                            setPublishError(false);
+                            setPublishMessage('');
+                            
+                            // Create slots in the database with dates
+                            const { data, error } = await supabase
+                              .from('slots')
+                              .insert(
+                                selectedSlotsWithDates.map(slot => ({
+                                  day: slot.day || '',
+                                  start_time: slot.start || '',
+                                  end_time: slot.end || '',
+                                  duration: parseInt(reviewDuration),
+                                  classroom_id: selectedClassroomId,
+                                  review_stage: reviewStage,
+                                  booking_deadline: bookingDeadline,
+                                  is_available: true,
+                                  slot_date: formatDateForInput(slot.slot_date)
+                                }))
+                              );
+                            
+                            if (error) {
+                              throw error;
+                            }
+                            
+                            setPublishSuccess(true);
+                            setPublishMessage(`Successfully published ${selectedSlotsWithDates.length} review slots!`);
+                            setSelectedSlots([]);
+                            fetchReviewSlots();
+                          } catch (error) {
+                            console.error('Error publishing slots:', error);
+                            setPublishError(true);
+                            setPublishMessage('Failed to publish slots. Please try again.');
+                          }
+                        }}
+                        onBack={() => {
+                          setShowSlotSelector(false);
+                          setShowDateSelector(true);
+                        }}
+                        onCancel={() => setShowSlotSelector(false)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
           {activeTab === 'slots' && (

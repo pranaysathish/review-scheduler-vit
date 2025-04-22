@@ -46,6 +46,18 @@ export default function CreateClassroomForm({ onSuccess, onCancel }: CreateClass
       if (!currentUser) {
         throw new Error('User not found');
       }
+      
+      // Get the user's database ID from the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('supabase_user_id', currentUser.id)
+        .single();
+        
+      if (userError || !userData) {
+        console.error('Error fetching user data:', userError);
+        throw new Error('Failed to get user database ID');
+      }
 
       // Generate a random link code (6 characters)
       const generateLinkCode = () => {
@@ -69,6 +81,9 @@ export default function CreateClassroomForm({ onSuccess, onCancel }: CreateClass
 
       // Create the classroom using a server action to bypass RLS
       // We'll use a fetch request to a server endpoint instead of direct Supabase client
+      // Log what we're sending for debugging
+      console.log('Creating classroom with faculty ID:', userData.id, 'Type:', typeof userData.id);
+      
       const response = await fetch('/api/classrooms/create', {
         method: 'POST',
         headers: {
@@ -76,7 +91,7 @@ export default function CreateClassroomForm({ onSuccess, onCancel }: CreateClass
         },
         body: JSON.stringify({
           name: data.name,
-          faculty_id: currentUser.id,
+          faculty_id: userData.id, // Use the database ID instead of auth ID
           link_code: linkCode,
           review_deadlines: reviewDeadlines
         }),

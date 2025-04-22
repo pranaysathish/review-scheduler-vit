@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Calendar, Users, FileText, Clock, School, X } from 'lucide-react';
 import Link from 'next/link';
@@ -68,16 +69,18 @@ export default function StudentDashboard() {
       if (classroomStudents && classroomStudents.length > 0) {
         const classroomIds = classroomStudents.map(cs => cs.classroom_id);
         
-        // Get classroom details
+        // Get classroom details with faculty information
         const { data: classroomData, error: classroomError } = await supabase
           .from('classrooms')
           .select(`
             id,
             name,
             review_deadlines,
-            faculty:faculty_id(name)
+            faculty_id
           `)
           .in('id', classroomIds);
+          
+        console.log('Raw classroom data:', classroomData);
 
         if (classroomError) {
           console.error('Error fetching classrooms:', classroomError);
@@ -88,25 +91,63 @@ export default function StudentDashboard() {
         const formattedClassrooms = [];
         
         for (const classroom of classroomData) {
-          // Count teams in this classroom
-          const { data: teamsCount, error: teamsCountError } = await supabase
+          console.log('Processing classroom:', classroom);
+          
+          // Get faculty name using our dedicated API endpoint
+          let facultyName = null;
+          
+          if (classroom.faculty_id) {
+            try {
+              // Call the API endpoint to get faculty name
+              const response = await fetch('/api/faculty/get-faculty-name', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  facultyId: classroom.faculty_id
+                }),
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                facultyName = data.name;
+                console.log(`Found faculty name for classroom ${classroom.name}:`, facultyName);
+              } else {
+                console.error(`Error finding faculty for classroom ${classroom.name}:`, await response.text());
+              }
+            } catch (error) {
+              console.error('Error fetching faculty information:', error);
+            }
+          } else {
+            console.log(`No faculty_id found for classroom ${classroom.name}`);
+          }
+          
+          // Count teams in this classroom - use service client to bypass RLS
+          const { data: teamsData, error: teamsError } = await supabase
             .from('teams')
-            .select('id', { count: 'exact', head: true })
+            .select('id')
             .eq('classroom_id', classroom.id);
             
-          // Count students in this classroom
-          const { data: studentsCount, error: studentsCountError } = await supabase
+          const teamsCount = teamsData?.length || 0;
+          console.log(`Found ${teamsCount} teams for classroom ${classroom.id}`);
+            
+          // Count students in this classroom - direct count
+          const { data: studentsData, error: studentsError } = await supabase
             .from('classroom_students')
-            .select('student_id', { count: 'exact', head: true })
+            .select('student_id')
             .eq('classroom_id', classroom.id);
+          
+          const studentsCount = studentsData?.length || 0;
+          console.log(`Found ${studentsCount} students for classroom ${classroom.id}`);
           
           formattedClassrooms.push({
             id: classroom.id,
             name: classroom.name,
-            faculty_name: classroom.faculty?.name,
+            faculty_name: facultyName || 'Faculty Not Found',
             review_deadlines: classroom.review_deadlines,
-            teams_count: teamsCount?.count || 0,
-            students_count: studentsCount?.count || 0
+            teams_count: teamsCount,
+            students_count: studentsCount
           });
         }
 
@@ -141,12 +182,18 @@ export default function StudentDashboard() {
       const formattedTeams = [];
       
       if (teamData && teamData.length > 0) {
-        // Get unique team IDs
-        const teamIds = [...new Set(teamData.map(item => item.team.id))];
+        // Get unique team IDs safely
+        const uniqueTeamIds = new Set<number>();
+        teamData.forEach(item => {
+          if (item.team && item.team.id) {
+            uniqueTeamIds.add(item.team.id);
+          }
+        });
+        const teamIds = Array.from(uniqueTeamIds);
         
         // For each team, get member count and details
         for (const teamId of teamIds) {
-          const teamItem = teamData.find(item => item.team.id === teamId);
+          const teamItem = teamData.find(item => item.team && item.team.id === teamId);
           
           if (teamItem) {
             try {
@@ -469,7 +516,7 @@ export default function StudentDashboard() {
                         </span>
                       </div>
                       <p className="text-gray-400 text-sm mb-3">
-                        {classroom.faculty_name ? `Faculty: ${classroom.faculty_name}` : 'No faculty assigned'}
+                        Faculty: {classroom.faculty_name}
                       </p>
                       <div className="flex items-center gap-2 text-sm">
                         <Clock size={14} className="text-indigo-400" />

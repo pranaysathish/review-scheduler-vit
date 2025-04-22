@@ -31,8 +31,8 @@ export default function JoinClassroomForm({ onSuccess, onCancel }: JoinClassroom
       formattedCode = `${formattedCode.slice(0, 3)}-${formattedCode.slice(3, 6)}`;
     }
     
-    // Remove hyphen if needed for backend processing
-    const processedCode = formattedCode.replace(/-/g, '');
+    // Keep the formatted code with hyphen for backend processing
+    console.log('Sending formatted code to API:', formattedCode);
 
     setIsSubmitting(true);
     setError(null);
@@ -45,7 +45,7 @@ export default function JoinClassroomForm({ onSuccess, onCancel }: JoinClassroom
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          linkCode: processedCode
+          linkCode: formattedCode
         }),
       });
 

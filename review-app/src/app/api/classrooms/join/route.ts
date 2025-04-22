@@ -1,6 +1,13 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+
+// Create a Supabase client with admin privileges to bypass RLS
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +24,9 @@ export async function POST(request: Request) {
     
     // Create a Supabase client with the user's cookies
     const supabase = createRouteHandlerClient({ cookies });
+    
+    // Log the received link code for debugging
+    console.log('Received link code:', linkCode);
     
     // Verify the user is authenticated and is a student
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -50,28 +60,66 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find the classroom by link code
-    const { data: classroom, error: classroomError } = await supabase
+    // Format the link code to ensure it matches the database format
+    // The link code in the database includes the hyphen (e.g., 'XXX-XXX')
+    let formattedLinkCode = linkCode;
+    
+    // Add hyphen if missing (XXX-XXX format)
+    if (formattedLinkCode.length === 6 && !formattedLinkCode.includes('-')) {
+      formattedLinkCode = `${formattedLinkCode.slice(0, 3)}-${formattedLinkCode.slice(3, 6)}`;
+    }
+    
+    console.log('Searching for classroom with link code:', formattedLinkCode);
+    
+    // First, let's get all classrooms to debug
+    const { data: allClassrooms } = await supabaseAdmin
       .from('classrooms')
-      .select('id')
-      .eq('link_code', linkCode)
+      .select('id, name, link_code');
+      
+    console.log('All classrooms in database:', allClassrooms);
+    
+    // Find the classroom by link code using admin client to bypass RLS
+    let { data: classroom, error: classroomError } = await supabaseAdmin
+      .from('classrooms')
+      .select('id, name, link_code')
+      .eq('link_code', formattedLinkCode)
       .single();
 
-    if (classroomError) {
+    if (classroomError || !classroom) {
       console.error('Error finding classroom:', classroomError);
-      return NextResponse.json(
-        { message: 'Classroom not found. Please check the link code and try again.' },
-        { status: 404 }
-      );
+      console.log('Attempted to find classroom with link code:', formattedLinkCode);
+      
+      // Try alternative formats as a fallback
+      const alternativeCode = formattedLinkCode.replace(/-/g, '');
+      console.log('Trying alternative format without hyphen:', alternativeCode);
+      
+      const { data: altClassroom, error: altError } = await supabaseAdmin
+        .from('classrooms')
+        .select('id, name, link_code')
+        .or(`link_code.eq.${formattedLinkCode},link_code.eq.${alternativeCode}`)
+        .maybeSingle();
+      
+      if (altClassroom) {
+        console.log('Found classroom with alternative format:', altClassroom);
+        // Use this classroom instead
+        classroom = altClassroom;
+      } else {
+        return NextResponse.json(
+          { message: 'Classroom not found. Please check the link code and try again.' },
+          { status: 404 }
+        );
+      }
     }
+    
+    console.log('Found classroom:', classroom);
 
-    // Check if student is already in the classroom
-    const { data: existingMembership, error: membershipError } = await supabase
+    // Check if student is already in the classroom using admin client
+    const { data: existingMembership, error: membershipError } = await supabaseAdmin
       .from('classroom_students')
       .select('id')
       .eq('classroom_id', classroom.id)
       .eq('student_id', userData.id)
-      .single();
+      .maybeSingle();
 
     if (existingMembership) {
       return NextResponse.json(
@@ -86,7 +134,7 @@ export async function POST(request: Request) {
     // Join the classroom - use RPC for security but also direct insert as fallback
     try {
       const { data: joinResult, error: joinError } = await supabase.rpc('join_classroom', {
-        p_link_code: linkCode,
+        p_link_code: formattedLinkCode,
         p_user_id: user.id
       });
       
@@ -109,8 +157,8 @@ export async function POST(request: Request) {
         );
       }
       
-      // Fallback to direct insert if RPC fails
-      const { error: insertError } = await supabase
+      // Fallback to direct insert if RPC fails - use admin client to bypass RLS
+      const { error: insertError } = await supabaseAdmin
         .from('classroom_students')
         .insert({
           classroom_id: classroom.id,
