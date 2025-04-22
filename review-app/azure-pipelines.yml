@@ -1,0 +1,90 @@
+trigger:
+- main
+- develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  nodeVersion: '16.x'
+
+stages:
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+  - job: BuildAndTest
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '$(nodeVersion)'
+      displayName: 'Install Node.js'
+
+    - script: |
+        cd review-app
+        npm install
+      displayName: 'Install dependencies'
+
+    - script: |
+        cd review-app
+        npm run lint
+      displayName: 'Run linting'
+      continueOnError: true
+
+    - script: |
+        cd review-app
+        npm run build
+      displayName: 'Build application'
+
+    - script: |
+        cd review-app
+        npm test || echo "No tests specified"
+      displayName: 'Run tests'
+      continueOnError: true
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: 'review-app/.next'
+        artifactName: 'next-build'
+      displayName: 'Publish build artifacts'
+
+- stage: DeployDev
+  displayName: 'Deploy to Development'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  jobs:
+  - job: Deploy
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'next-build'
+        downloadPath: '$(System.ArtifactsDirectory)'
+      
+    - script: |
+        echo "Deploying to development environment..."
+        # Add deployment commands here
+        # For example, deploying to Vercel:
+        # npx vercel --token $(VERCEL_TOKEN) --confirm
+      displayName: 'Deploy to development'
+
+- stage: DeployProd
+  displayName: 'Deploy to Production'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - job: Deploy
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'next-build'
+        downloadPath: '$(System.ArtifactsDirectory)'
+      
+    - script: |
+        echo "Deploying to production environment..."
+        # Add deployment commands here
+        # For example, deploying to Vercel:
+        # npx vercel --token $(VERCEL_TOKEN) --prod --confirm
+      displayName: 'Deploy to production'

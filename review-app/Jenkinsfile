@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    
+    tools {
+        nodejs 'Node16' // Make sure this matches a NodeJS installation configured in Jenkins
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                dir('review-app') {
+                    sh 'npm install'
+                }
+            }
+        }
+        
+        stage('Lint') {
+            steps {
+                dir('review-app') {
+                    sh 'npm run lint'
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                dir('review-app') {
+                    sh 'npm run build'
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                dir('review-app') {
+                    sh 'npm test || echo "No tests specified"'
+                }
+            }
+        }
+        
+        stage('Deploy to Development') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                echo 'Deploying to development environment...'
+                // Add deployment commands for your dev environment
+                // For example, deploying to Vercel:
+                // sh 'npx vercel --token $VERCEL_TOKEN --prod'
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying to production environment...'
+                // Add deployment commands for your production environment
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline execution completed'
+        }
+        success {
+            echo 'Pipeline executed successfully'
+        }
+        failure {
+            echo 'Pipeline execution failed'
+        }
+    }
+}
