@@ -615,6 +615,28 @@ export default function FacultyDashboard() {
               </motion.div>
 
               {/* Timetable upload */}
+              {/* Success message */}
+              {publishSuccess && (
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-green-900/30 border border-green-800 rounded-xl overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
+                >
+                  <CheckCircle size={18} className="text-green-400" />
+                  <span className="text-green-400">{publishMessage}</span>
+                </motion.div>
+              )}
+              
+              {/* Error message */}
+              {publishError && (
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-red-900/30 border border-red-800 rounded-xl overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
+                >
+                  <AlertCircle size={18} className="text-red-400" />
+                  <span className="text-red-400">{publishMessage}</span>
+                </motion.div>
+              )}
+              
               <motion.div
                 variants={itemVariants}
                 className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden max-w-3xl mx-auto"
@@ -826,6 +848,13 @@ export default function FacultyDashboard() {
                             setPublishError(false);
                             setPublishMessage('');
                             
+                            // Get current user's ID
+                            const { data: { user: currentUser } } = await supabase.auth.getUser();
+                            
+                            if (!currentUser) {
+                              throw new Error('User not authenticated');
+                            }
+                            
                             // Create slots in the database with dates
                             const { data, error } = await supabase
                               .from('slots')
@@ -839,7 +868,8 @@ export default function FacultyDashboard() {
                                   review_stage: reviewStage,
                                   booking_deadline: bookingDeadline,
                                   is_available: true,
-                                  slot_date: formatDateForInput(slot.slot_date)
+                                  slot_date: formatDateForInput(slot.slot_date),
+                                  created_by: currentUser.id
                                 }))
                               );
                             
@@ -851,6 +881,9 @@ export default function FacultyDashboard() {
                             setPublishMessage(`Successfully published ${selectedSlotsWithDates.length} review slots!`);
                             setSelectedSlots([]);
                             fetchReviewSlots();
+                            
+                            // Show a toast notification or alert
+                            alert(`Successfully published ${selectedSlotsWithDates.length} review slots!`);
                           } catch (error) {
                             console.error('Error publishing slots:', error);
                             setPublishError(true);

@@ -26,11 +26,90 @@ export default function StudentDashboard() {
   const [teams, setTeams] = useState<any[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [upcomingReviews, setUpcomingReviews] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [showClassroomDetailsModal, setShowClassroomDetailsModal] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
   const supabase = createClientComponentClient();
+
+  // Function to fetch available slots for the student
+  const fetchAvailableSlots = async () => {
+    try {
+      setSlotsLoading(true);
+      const response = await fetch('/api/student/slots');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch available slots');
+      }
+      
+      const { data } = await response.json();
+      setAvailableSlots(data || []);
+    } catch (error) {
+      console.error('Error fetching available slots:', error);
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+  
+  // Function to book a slot
+  const bookSlot = async (slotId: string, reviewStage: string) => {
+    try {
+      // Get the student's team ID
+      const { data: teamMembers } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('student_id', user.id);
+      
+      if (!teamMembers || teamMembers.length === 0) {
+        alert('You need to be part of a team to book a slot');
+        return;
+      }
+      
+      const teamId = teamMembers[0].team_id;
+      
+      // Check if the team already has a booking for this review stage
+      const { data: existingBookings } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          slot_id,
+          slot:slots!slot_id(review_stage)
+        `)
+        .eq('team_id', teamId);
+      
+      const hasBookingForStage = existingBookings?.some(
+        (booking: any) => booking.slot?.review_stage === reviewStage
+      );
+      
+      if (hasBookingForStage) {
+        alert(`Your team already has a booking for ${reviewStage}. You can only have one booking per review stage.`);
+        return;
+      }
+      
+      // Create a booking
+      const { error } = await supabase
+        .from('bookings')
+        .insert({
+          slot_id: slotId,
+          team_id: teamId,
+          created_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        console.error('Booking error:', error);
+        throw new Error('Failed to create booking. Please try again.');
+      }
+      
+      alert('Slot booked successfully!');
+      fetchAvailableSlots(); // Refresh the slots
+    } catch (error) {
+      console.error('Error booking slot:', error);
+      alert('Failed to book slot. Please try again.');
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -81,6 +160,9 @@ export default function StudentDashboard() {
           .in('id', classroomIds);
           
         console.log('Raw classroom data:', classroomData);
+        
+        // Fetch available slots
+        fetchAvailableSlots();
 
         if (classroomError) {
           console.error('Error fetching classrooms:', classroomError);
@@ -635,6 +717,8 @@ export default function StudentDashboard() {
             )}
           </motion.div>
 
+
+          
           {/* Activity Feed */}
           <motion.div variants={itemVariants} className="mb-12">
             <h3 className="text-xl font-bold mb-4">Activity Feed</h3>
