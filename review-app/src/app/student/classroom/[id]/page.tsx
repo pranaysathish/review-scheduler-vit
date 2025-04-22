@@ -79,16 +79,14 @@ export default function ClassroomPage() {
           throw membershipError;
         }
 
-        // Get classroom details
+        // Get classroom details without using relationships
         const { data: classroomData, error: classroomError } = await supabase
           .from('classrooms')
           .select(`
             id,
             name,
             review_deadlines,
-            faculty:users!classrooms_faculty_id_fkey(name),
-            teams:teams!classrooms_id_fkey(count),
-            students:classroom_students!classrooms_id_fkey(count)
+            faculty_id
           `)
           .eq('id', classroomId)
           .single();
@@ -97,52 +95,107 @@ export default function ClassroomPage() {
           throw classroomError;
         }
 
+        // Get faculty name separately - improved query to ensure we get the faculty name
+        let facultyName = 'Unknown';
+        if (classroomData.faculty_id) {
+          // First try with the direct faculty_id
+          const { data: facultyData } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', classroomData.faculty_id)
+            .single();
+            
+          if (facultyData && facultyData.name) {
+            facultyName = facultyData.name;
+          } else {
+            // Try with a more comprehensive approach
+            const { data: classroomWithFaculty } = await supabase
+              .from('classrooms')
+              .select('faculty_id')
+              .eq('id', classroomId)
+              .single();
+              
+            if (classroomWithFaculty && classroomWithFaculty.faculty_id) {
+              const { data: facultyUser } = await supabase
+                .from('users')
+                .select('name')
+                .eq('id', classroomWithFaculty.faculty_id)
+                .single();
+                
+              if (facultyUser && facultyUser.name) {
+                facultyName = facultyUser.name;
+              }
+            }
+          }
+        }
+        
+        // Get team count separately
+        const { count: teamsCount } = await supabase
+          .from('teams')
+          .select('id', { count: 'exact', head: true })
+          .eq('classroom_id', classroomId);
+          
+        // Get student count separately
+        const { count: studentsCount } = await supabase
+          .from('classroom_students')
+          .select('id', { count: 'exact', head: true })
+          .eq('classroom_id', classroomId);
+        
         // Format classroom data
         const formattedClassroom = {
           id: classroomData.id,
           name: classroomData.name,
-          faculty_name: classroomData.faculty?.name,
+          faculty_name: facultyName,
           review_deadlines: classroomData.review_deadlines,
-          teams_count: classroomData.teams?.[0]?.count || 0,
-          students_count: classroomData.students?.[0]?.count || 0
+          teams_count: teamsCount || 0,
+          students_count: studentsCount || 0
         };
 
         setClassroom(formattedClassroom);
 
-        // Check if user is already in a team in this classroom
-        const { data: userTeamData, error: userTeamError } = await supabase
+        // Check if user is already in a team in this classroom - avoid nested relationships
+        const { data: userTeamMemberships } = await supabase
           .from('team_members')
-          .select(`
-            teams!inner(
-              id,
-              name,
-              project_title,
-              members:team_members!teams_id_fkey(count)
-            )
-          `)
-          .eq('student_id', userData.id)
-          .eq('teams.classroom_id', classroomId);
+          .select('team_id')
+          .eq('student_id', userData.id);
+          
+        let userTeamData = null;
+        
+        // If user has team memberships, find one in this classroom
+        if (userTeamMemberships && userTeamMemberships.length > 0) {
+          const teamIds = userTeamMemberships.map(tm => tm.team_id);
+          
+          const { data: teamsInClassroom } = await supabase
+            .from('teams')
+            .select('id, name, project_title')
+            .eq('classroom_id', classroomId)
+            .in('id', teamIds);
+            
+          if (teamsInClassroom && teamsInClassroom.length > 0) {
+            userTeamData = teamsInClassroom[0];
+          }
+        }
 
-        if (!userTeamError && userTeamData && userTeamData.length > 0) {
-          const team = userTeamData[0].teams;
+        if (userTeamData) {
+          // Get member count for this team
+          const { count: membersCount } = await supabase
+            .from('team_members')
+            .select('id', { count: 'exact', head: true })
+            .eq('team_id', userTeamData.id);
+            
           setUserTeam({
-            id: team.id,
-            name: team.name,
-            project_title: team.project_title,
-            members_count: team.members?.[0]?.count || 0,
+            id: userTeamData.id,
+            name: userTeamData.name,
+            project_title: userTeamData.project_title,
+            members_count: membersCount || 0,
             is_member: true
           });
         }
 
-        // Get teams in this classroom
+        // Get teams in this classroom without using relationships
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
-          .select(`
-            id,
-            name,
-            project_title,
-            members:team_members!teams_id_fkey(count)
-          `)
+          .select('id, name, project_title')
           .eq('classroom_id', classroomId);
 
         if (teamError) {
@@ -161,14 +214,41 @@ export default function ClassroomPage() {
 
         const memberTeamIds = memberTeams?.map(mt => mt.team_id) || [];
 
-        // Format team data
-        const formattedTeams = teamData ? teamData.map(team => ({
-          id: team.id,
-          name: team.name,
-          project_title: team.project_title,
-          members_count: team.members?.[0]?.count || 0,
-          is_member: memberTeamIds.includes(team.id)
-        })) : [];
+        // Format team data with member counts fetched separately
+        // This will display all teams in the classroom
+        const formattedTeams = [];
+        
+        if (teamData && teamData.length > 0) {
+          console.log(`Found ${teamData.length} teams in classroom ${classroomId}`);
+          
+          for (const team of teamData) {
+            // Get member count for each team
+            const { count: membersCount } = await supabase
+              .from('team_members')
+              .select('id', { count: 'exact', head: true })
+              .eq('team_id', team.id);
+            
+            // Get team members to show more details
+            const { data: teamMembers } = await supabase
+              .from('team_members')
+              .select(`
+                student_id,
+                role
+              `)
+              .eq('team_id', team.id);
+            
+            const memberCount = membersCount || (teamMembers ? teamMembers.length : 0);
+            console.log(`Team ${team.name} has ${memberCount} members`);
+              
+            formattedTeams.push({
+              id: team.id,
+              name: team.name,
+              project_title: team.project_title || '',
+              members_count: memberCount,
+              is_member: memberTeamIds.includes(team.id)
+            });
+          }
+        }
 
         setTeams(formattedTeams);
       } catch (error: any) {

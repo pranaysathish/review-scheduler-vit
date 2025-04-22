@@ -122,12 +122,11 @@ export default function FacultyDashboard() {
           console.log('RPC function failed, using fallback query');
           let fallbackData, fallbackError;
           
-          // Try with the database user ID first - use a more detailed query
+          // Try with the database user ID first - use a more detailed query without nested relationships
           const { data: data1, error: error1 } = await supabase
             .from('classrooms')
             .select(`
               *,
-              teams:teams(count),
               students:classroom_students(count),
               classroom_students(*)
             `)
@@ -144,7 +143,6 @@ export default function FacultyDashboard() {
               .from('classrooms')
               .select(`
                 *,
-                teams:teams(count),
                 students:classroom_students(count)
               `)
               .eq('faculty_id', currentUser?.id);
@@ -170,21 +168,8 @@ export default function FacultyDashboard() {
               console.log(`Manual count for ${classroom.name}:`, studentCount);
             }
             
-            // Ensure we properly count teams
-            let teamsCount = 0;
-            
-            // Try multiple approaches to get the team count
-            if (classroom.teams?.count !== undefined) {
-              teamsCount = classroom.teams.count;
-            } else if (classroom.teams && Array.isArray(classroom.teams)) {
-              teamsCount = classroom.teams.length;
-            }
-            
-            // We'll set a default of 0 and let the direct query update it
-            // This ensures new classrooms start with 0 teams
-            teamsCount = 0;
-            
-            console.log(`Teams count for ${classroom.name}:`, teamsCount);
+            // We'll set a default of 0 for teams count and update it separately
+            const teamsCount = 0;
             
             return {
               ...classroom,
@@ -200,29 +185,21 @@ export default function FacultyDashboard() {
                 // Direct query for classroom students
                 const { data: students, error: studentError } = await supabase
                   .from('classroom_students')
-                  .select('*')
+                  .select('student_id')
                   .eq('classroom_id', classroom.id);
                   
-                if (!studentError && students) {
-                  // Update the classroom with the actual student count
-                  classroom.students_count = students.length;
-                  console.log(`Direct student count for ${classroom.name}:`, students.length);
+                if (!studentError) {
+                  classroom.students_count = students?.length || 0;
                 }
                 
-                // Direct query for teams in this classroom
-                const { data: teams, error: teamError } = await supabase
+                // Direct query for teams - use a simple count query to avoid relationship issues
+                const { count: teamsCount, error: teamError } = await supabase
                   .from('teams')
-                  .select('*')
+                  .select('id', { count: 'exact', head: true })
                   .eq('classroom_id', classroom.id);
                   
-                if (!teamError && teams) {
-                  // Update the classroom with the actual team count
-                  classroom.teams_count = teams.length;
-                  console.log(`Direct team count for ${classroom.name}:`, teams.length);
-                  console.log('Team data:', teams);
-                } else {
-                  // If there's an error or no teams, set count to 0
-                  classroom.teams_count = 0;
+                if (!teamError) {
+                  classroom.teams_count = teamsCount || 0;
                 }
               }
               

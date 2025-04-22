@@ -15,6 +15,17 @@ interface TeamMember {
   joined_at: string;
 }
 
+interface BookedSlot {
+  id: string;
+  day: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  review_stage: string;
+  classroom_name: string;
+  booking_id: string;
+}
+
 interface Team {
   id: number;
   name: string;
@@ -25,6 +36,7 @@ interface Team {
   classroom_name: string;
   members: TeamMember[];
   is_leader: boolean;
+  booked_slots: BookedSlot[];
 }
 
 export default function TeamPage() {
@@ -37,6 +49,7 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -118,6 +131,80 @@ export default function TeamPage() {
           throw membersError;
         }
 
+        // Get booked slots for this team
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('bookings')
+          .select(`
+            id,
+            slot_id,
+            created_at,
+            slots(
+              id,
+              day,
+              slot_date,
+              start_time,
+              end_time,
+              review_stage,
+              classroom_id
+            )
+          `)
+          .eq('team_id', teamId);
+          
+        if (bookingsError) {
+          console.error('Error fetching bookings:', bookingsError);
+        }
+        
+        // Get classroom names for the booked slots
+        const bookedSlotsWithClassrooms: BookedSlot[] = [];
+        if (bookings && bookings.length > 0) {
+          for (const booking of bookings) {
+            // TypeScript fix - ensure slots exists and has the expected properties
+            const slots = booking.slots as any;
+            if (slots && slots.classroom_id) {
+              const { data: classroomData } = await supabase
+                .from('classrooms')
+                .select('name')
+                .eq('id', slots.classroom_id)
+                .single();
+                
+              const classroomName = classroomData ? classroomData.name : 'Unknown Classroom';
+              
+              // Format the date
+              const slotDate = slots.slot_date ? new Date(slots.slot_date) : null;
+              const formattedDate = slotDate ? 
+                new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(slotDate) : 
+                slots.day;
+              
+              bookedSlotsWithClassrooms.push({
+                id: slots.id,
+                day: slots.day,
+                date: formattedDate,
+                start_time: slots.start_time,
+                end_time: slots.end_time,
+                review_stage: slots.review_stage,
+                classroom_name: classroomName,
+                booking_id: booking.id
+              });
+            }
+          }
+        }
+        
+        // Sort booked slots by date/time
+        bookedSlotsWithClassrooms.sort((a, b) => {
+          // First compare by date if available
+          if (a.date && b.date) {
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          }
+          // Then by day of week
+          const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+          const dayDiff = days.indexOf(a.day) - days.indexOf(b.day);
+          if (dayDiff !== 0) return dayDiff;
+          // Then by start time
+          return a.start_time.localeCompare(b.start_time);
+        });
+        
+        setBookedSlots(bookedSlotsWithClassrooms);
+        
         // Format team data
         const formattedTeam = {
           id: teamData.id,
@@ -134,7 +221,8 @@ export default function TeamPage() {
             roll_number: member.users.roll_number,
             joined_at: member.joined_at
           })),
-          is_leader: membership.role === 'leader'
+          is_leader: membership.role === 'leader',
+          booked_slots: bookedSlotsWithClassrooms
         };
 
         setTeam(formattedTeam);
@@ -411,13 +499,48 @@ export default function TeamPage() {
           <motion.div variants={itemVariants}>
             <h3 className="text-xl font-bold mb-4">Upcoming Reviews</h3>
             
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-              <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                <Calendar size={24} className="text-gray-400" />
+            {team?.booked_slots && team.booked_slots.length > 0 ? (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-800">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Review Stage</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Classroom</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {team.booked_slots.map((slot) => (
+                        <tr key={slot.id} className="bg-gray-900 hover:bg-gray-800">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">
+                            {slot.date || slot.day}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                            {slot.start_time} - {slot.end_time}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                            {slot.review_stage}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                            {slot.classroom_name}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <h4 className="text-lg font-medium mb-2">No upcoming reviews</h4>
-              <p className="text-gray-400">Your scheduled reviews will appear here</p>
-            </div>
+            ) : (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+                <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
+                  <Calendar size={24} className="text-gray-400" />
+                </div>
+                <h4 className="text-lg font-medium mb-2">No upcoming reviews</h4>
+                <p className="text-gray-400">Your scheduled reviews will appear here</p>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       </main>

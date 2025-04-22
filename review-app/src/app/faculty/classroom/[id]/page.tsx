@@ -57,20 +57,31 @@ export default function ClassroomManagementPage() {
       try {
         setLoading(true);
         
-        // Use the API endpoint to get classroom data
-        const response = await fetch(`/api/classrooms/${classroomId}/data`);
+        // Fetch classroom details first
+        const classroomResponse = await fetch(`/api/classrooms/${classroomId}/data`);
         
-        if (!response.ok) {
-          const errorData = await response.json();
+        if (!classroomResponse.ok) {
+          const errorData = await classroomResponse.json();
           throw new Error(errorData.message || 'Failed to fetch classroom data');
         }
         
-        const data = await response.json();
-        console.log('Received classroom data:', data);
+        const classroomData = await classroomResponse.json();
+        console.log('Received classroom data:', classroomData);
         
-        setClassroom(data.classroom);
-        setStudents(data.students || []);
-        setTeams(data.teams || []);
+        setClassroom(classroomData.classroom);
+        setStudents(classroomData.students || []);
+        
+        // Fetch teams separately using the dedicated endpoint
+        const teamsResponse = await fetch(`/api/classrooms/${classroomId}/teams`);
+        
+        if (teamsResponse.ok) {
+          const teamsData = await teamsResponse.json();
+          console.log('Received teams data:', teamsData);
+          setTeams(teamsData.teams || []);
+        } else {
+          console.error('Failed to fetch teams, but continuing with other data');
+          setTeams([]);
+        }
       } catch (error: any) {
         console.error('Error fetching classroom data:', error);
         setError(error.message);

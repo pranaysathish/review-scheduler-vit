@@ -195,88 +195,38 @@ export async function GET(
     // Log for debugging
     console.log('Formatted students from RPC:', formattedStudents);
     
-    // Get all teams in the classroom
-    const { data: teams, error: teamsError } = await supabase
-      .from('teams')
-      .select(`
-        id,
-        name,
-        project_title
-      `)
-      .eq('classroom_id', classroomId);
-      
-    if (teamsError) {
-      return NextResponse.json(
-        { message: 'Error fetching teams' },
-        { status: 500 }
-      );
-    }
+    // We'll skip fetching teams here and let the dedicated teams endpoint handle it
+    // This avoids any relationship issues
     
-    // Get team members using direct SQL query to bypass RLS
-    const { data: teamMembersResult, error: teamMembersError } = await supabase
+    // Get team memberships for students to know which team they belong to
+    const { data: teamMemberships, error: teamMembershipsError } = await supabase
       .from('team_members')
       .select(`
         team_id,
         student_id,
         role,
-        student:student_id(
-          id,
-          name,
-          email,
-          roll_number
-        )
+        team:team_id(id, name, project_title)
       `)
-      .in('team_id', teams.map(t => t.id) || []);
+      .in('student_id', formattedStudents.map(student => student.id));
     
-    if (teamMembersError) {
-      return NextResponse.json(
-        { message: `Error fetching team members: ${teamMembersError.message}` },
-        { status: 500 }
-      );
-    }
-    
-    // Ensure we have valid data
-    const teamMembers = teamMembersResult || [];
-    
-    // Format the data
-    const formattedTeams = teams.map(team => {
-      const members = teamMembers
-        .filter(tm => tm.team_id === team.id && tm.student)
-        .map(tm => ({
-          id: tm.student.id,
-          name: tm.student.name,
-          email: tm.student.email,
-          roll_number: tm.student.roll_number,
-          role: tm.role
-        }));
-      
-      return {
-        ...team,
-        members_count: members.length,
-        members
-      };
-    });
-    
-    // Update students with team info
-    for (const student of formattedStudents) {
-      for (const team of formattedTeams) {
-        const memberInfo = team.members.find(m => m.id === student.id);
-        if (memberInfo) {
+    if (!teamMembershipsError && teamMemberships) {
+      // Update students with team info
+      for (const student of formattedStudents) {
+        const membership = teamMemberships.find(tm => tm.student_id === student.id && tm.team);
+        if (membership) {
           student.team = {
-            id: team.id,
-            name: team.name,
-            project_title: team.project_title,
-            role: memberInfo.role
+            id: membership.team.id,
+            name: membership.team.name,
+            project_title: membership.team.project_title,
+            role: membership.role
           };
-          break;
         }
       }
     }
     
     return NextResponse.json({
       classroom,
-      students: formattedStudents,
-      teams: formattedTeams
+      students: formattedStudents
     });
   } catch (error: any) {
     console.error('Error in classroom data API:', error);
