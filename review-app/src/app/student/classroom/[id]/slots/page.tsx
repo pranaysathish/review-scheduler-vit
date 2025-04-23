@@ -185,8 +185,8 @@ export default function StudentSlotBookingPage() {
   }
   
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -194,26 +194,26 @@ export default function StudentSlotBookingPage() {
         >
           {/* Header */}
           <motion.div variants={itemVariants} className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <button
-                onClick={() => router.back()}
-                className="p-2 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold">Book Review Slot</h1>
-                <p className="text-gray-400">Select a time slot for your team's review</p>
-              </div>
+            <div className="flex items-center gap-3 mb-6">
+                <button
+                  onClick={() => router.back()}
+                  className="p-2 rounded-full bg-[#1e1e1e] hover:bg-[#252525] transition-colors duration-200"
+                >
+                  <ArrowLeft size={18} className="text-[#a0a0a0]" />
+                </button>
+                <div>
+                  <h1 className="text-xl font-medium">Book Review Slot</h1>
+                  <p className="text-[#a0a0a0] text-xs mt-1">Select a time slot for your team's review</p>
+                </div>
             </div>
             
             {/* Booking Deadline Alert */}
             {slots.length > 0 && slots[0].booking_deadline && (
-              <div className="bg-amber-900/20 border border-amber-800/50 rounded-lg p-4 mt-4 flex items-start gap-3">
-                <Clock className="text-amber-400 h-5 w-5 mt-0.5 flex-shrink-0" />
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-3 mt-4 flex items-start gap-3 max-w-lg">
+                <Clock className="text-[#a0a0a0] h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-medium text-amber-300">Booking Deadline</h3>
-                  <p className="text-amber-200/80">
+                  <h3 className="font-medium text-sm">Booking Deadline</h3>
+                  <p className="text-[#a0a0a0] text-xs mt-1">
                     You must book your slot before {new Date(slots[0].booking_deadline).toLocaleDateString()} for {slots[0].review_stage}
                   </p>
                 </div>
@@ -224,15 +224,15 @@ export default function StudentSlotBookingPage() {
           {/* Team Selection */}
           {teams.length > 0 ? (
             <motion.div variants={itemVariants} className="mb-6">
-              <h2 className="text-lg font-medium mb-3">Select Your Team</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <h2 className="text-base font-medium mb-3">Select Your Team</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
                 {teams.map(team => (
                   <div
                     key={team.id}
-                    className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                    className={`p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
                       selectedTeam === team.id
-                        ? 'bg-indigo-900/50 border border-indigo-700'
-                        : 'bg-gray-900 border border-gray-800 hover:bg-gray-800'
+                        ? 'bg-[#1a1a1a] border border-[#303030]'
+                        : 'bg-[#141414] border border-[#1e1e1e] hover:bg-[#1a1a1a]'
                     } ${!team.isLeader ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={() => team.isLeader && setSelectedTeam(team.id)}
                   >
@@ -244,17 +244,17 @@ export default function StudentSlotBookingPage() {
                         )}
                       </div>
                       {team.isLeader ? (
-                        <span className="text-xs bg-indigo-900/30 text-indigo-300 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-[#1e1e1e] text-[#a0a0a0] px-2 py-1 rounded-full">
                           Team Leader
                         </span>
                       ) : (
-                        <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-[#1e1e1e] text-[#a0a0a0] px-2 py-1 rounded-full">
                           Member
                         </span>
                       )}
                     </div>
                     {!team.isLeader && (
-                      <p className="text-amber-400 text-xs mt-2">
+                      <p className="text-[#a0a0a0] text-xs mt-2">
                         Only team leaders can book slots
                       </p>
                     )}
@@ -262,21 +262,21 @@ export default function StudentSlotBookingPage() {
                 ))}
               </div>
               {teams.length === 0 && (
-                <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-                  <p className="text-gray-400">You are not a member of any team in this classroom</p>
+                <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-4 text-center">
+                  <p className="text-[#a0a0a0] text-sm">You are not a member of any team in this classroom</p>
                 </div>
               )}
             </motion.div>
           ) : (
             <motion.div variants={itemVariants} className="mb-6">
-              <div className="bg-amber-900/20 border border-amber-800/50 rounded-lg p-4">
-                <h2 className="text-lg font-medium text-amber-300 mb-2">No Teams Available</h2>
-                <p className="text-amber-200/80">
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-4">
+                <h2 className="text-base font-medium mb-2">No Teams Available</h2>
+                <p className="text-[#a0a0a0] text-sm">
                   You need to join or create a team in this classroom before you can book a review slot.
                 </p>
                 <Link 
                   href={`/student/classroom/${classroomId}/teams`}
-                  className="mt-3 inline-block text-amber-300 hover:text-amber-200"
+                  className="mt-3 inline-block text-xs bg-[#1e1e1e] hover:bg-[#252525] px-3 py-1.5 rounded-md transition-colors duration-200"
                 >
                   Go to Teams Page
                 </Link>
@@ -287,26 +287,26 @@ export default function StudentSlotBookingPage() {
           {/* Available Slots */}
           {Object.keys(slotsByDay).length > 0 ? (
             <motion.div variants={itemVariants}>
-              <h2 className="text-lg font-medium mb-3">Available Slots</h2>
-              <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/20 rounded-xl p-5 border border-indigo-800/30 shadow-xl">
+              <h2 className="text-base font-medium mb-3">Available Slots</h2>
+              <div className="bg-[#141414] rounded-lg p-4 border border-[#1e1e1e]">
                 <div className="space-y-4">
                   {Object.entries(slotsByDay).map(([day, daySlots]) => (
-                    <div key={day} className="bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-lg overflow-hidden">
-                      <div className="bg-gray-800/80 p-3 border-b border-gray-700">
+                    <div key={day} className="bg-[#1a1a1a] border border-[#1e1e1e] rounded-lg overflow-hidden mb-3">
+                      <div className="bg-[#1e1e1e] p-3 border-b border-[#252525]">
                         <h3 className="font-medium flex items-center gap-2">
-                          <Calendar size={16} className="text-indigo-400" />
+                          <Calendar size={16} className="text-[#a0a0a0]" />
                           {formatDay(day)}
                         </h3>
                       </div>
                       <div className="p-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-1">
                           {daySlots.map(slot => (
                             <div
                               key={slot.id}
-                              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                              className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors duration-200 ${
                                 selectedSlot === slot.id
-                                  ? 'bg-indigo-900/50 border border-indigo-700'
-                                  : 'bg-gray-800/80 hover:bg-gray-700/80'
+                                  ? 'bg-[#252525] border border-[#303030]'
+                                  : 'bg-[#1e1e1e] hover:bg-[#252525]'
                               } ${!selectedTeam || teams.every(t => !t.isLeader) ? 'opacity-50 cursor-not-allowed' : ''}`}
                               onClick={() => {
                                 if (selectedTeam && teams.some(t => t.id === selectedTeam && t.isLeader)) {
@@ -315,22 +315,22 @@ export default function StudentSlotBookingPage() {
                               }}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="bg-gray-700/80 p-1.5 rounded">
-                                  <Clock size={16} className="text-indigo-300" />
+                                <div className="bg-[#252525] p-1.5 rounded-full">
+                                  <Clock size={14} className="text-[#a0a0a0]" />
                                 </div>
                                 <div>
-                                  <p className="font-medium">{slot.start_time} - {slot.end_time}</p>
-                                  <p className="text-gray-400 text-xs">{slot.duration} minutes • {slot.review_stage}</p>
+                                  <p className="font-medium text-sm">{slot.start_time} - {slot.end_time}</p>
+                                  <p className="text-[#a0a0a0] text-xs">{slot.duration} min • {slot.review_stage}</p>
                                 </div>
                               </div>
                               <div>
                                 {selectedSlot === slot.id ? (
-                                  <div className="bg-indigo-900/50 p-1.5 rounded-full">
-                                    <CheckCircle size={16} className="text-indigo-300" />
+                                  <div className="bg-[#252525] p-1.5 rounded-full">
+                                    <CheckCircle size={16} className="text-[#a0a0a0]" />
                                   </div>
                                 ) : (
-                                  <div className="bg-gray-700/50 p-1.5 rounded-full opacity-50 group-hover:opacity-100">
-                                    <Plus size={14} className="text-gray-300" />
+                                  <div className="bg-[#252525] p-1.5 rounded-full opacity-50 group-hover:opacity-100">
+                                    <Plus size={14} className="text-[#a0a0a0]" />
                                   </div>
                                 )}
                               </div>
@@ -345,11 +345,11 @@ export default function StudentSlotBookingPage() {
             </motion.div>
           ) : (
             <motion.div variants={itemVariants}>
-              <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/20 rounded-xl p-5 border border-indigo-800/30 shadow-xl">
-                <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-lg p-6 text-center">
-                  <Calendar size={32} className="text-gray-600 mx-auto mb-3" />
-                  <h2 className="text-lg font-medium mb-2">No Available Slots</h2>
-                  <p className="text-gray-400">
+              <div className="bg-[#141414] rounded-lg p-5 border border-[#1e1e1e]">
+                <div className="bg-[#1a1a1a] border border-[#1e1e1e] rounded-lg p-4 text-center">
+                  <Calendar size={32} className="text-[#a0a0a0] mx-auto mb-3" />
+                  <h2 className="text-base font-medium mb-2">No Available Slots</h2>
+                  <p className="text-[#a0a0a0] text-sm">
                     There are no review slots available for booking at this time.
                   </p>
                 </div>
@@ -361,23 +361,23 @@ export default function StudentSlotBookingPage() {
           {(selectedTeam && selectedSlot) && (
             <motion.div 
               variants={itemVariants} 
-              className="mt-6 bg-gradient-to-r from-indigo-900/30 to-purple-900/20 rounded-xl p-5 border border-indigo-800/30 shadow-xl"
+              className="mt-6 bg-[#141414] rounded-lg p-4 border border-[#1e1e1e] max-w-lg"
             >
-              <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-lg p-4">
+              <div className="bg-[#1a1a1a] border border-[#1e1e1e] rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-indigo-600 p-2 rounded-lg shadow-md">
-                      <Calendar size={18} className="text-white" />
+                    <div className="bg-[#252525] p-2 rounded-lg">
+                      <Calendar size={18} className="text-[#a0a0a0]" />
                     </div>
                     <div>
                       <h3 className="font-medium">Ready to Book</h3>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-[#a0a0a0] text-xs mt-1">
                         Book this slot for your team's review
                       </p>
                     </div>
                   </div>
                   <button
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-md"
+                    className="bg-[#1e1e1e] text-white px-3 py-1.5 text-sm rounded-md hover:bg-[#252525] transition-colors duration-200"
                     onClick={bookSlot}
                     disabled={bookingStatus === 'loading'}
                   >
@@ -386,21 +386,21 @@ export default function StudentSlotBookingPage() {
                 </div>
                 
                 {bookingStatus === 'success' && (
-                  <div className="mt-3 p-3 bg-green-900/30 border border-green-800 rounded-lg flex items-start gap-2">
-                    <CheckCircle className="text-green-400 h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <div className="mt-3 p-2.5 bg-[#1e1e1e] border border-[#252525] rounded-md flex items-start gap-2">
+                    <CheckCircle className="text-[#a0a0a0] h-5 w-5 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-green-300 font-medium">Booking Successful!</p>
-                      <p className="text-green-300/80 text-sm">{bookingMessage}</p>
+                      <p className="font-medium text-sm">Booking Successful!</p>
+                      <p className="text-[#a0a0a0] text-xs mt-1">{bookingMessage}</p>
                     </div>
                   </div>
                 )}
                 
                 {bookingStatus === 'error' && (
-                  <div className="mt-3 p-3 bg-red-900/30 border border-red-800 rounded-lg flex items-start gap-2">
-                    <AlertCircle className="text-red-400 h-5 w-5 mt-0.5 flex-shrink-0" />
+                  <div className="mt-3 p-2.5 bg-[#1e1e1e] border border-[#252525] rounded-md flex items-start gap-2">
+                    <AlertCircle className="text-[#a0a0a0] h-5 w-5 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-red-300 font-medium">Booking Failed</p>
-                      <p className="text-red-300/80 text-sm">{bookingMessage}</p>
+                      <p className="font-medium text-sm">Booking Failed</p>
+                      <p className="text-[#a0a0a0] text-xs mt-1">{bookingMessage}</p>
                     </div>
                   </div>
                 )}

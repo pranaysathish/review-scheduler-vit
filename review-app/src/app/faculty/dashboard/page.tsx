@@ -362,27 +362,35 @@ export default function FacultyDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-[#0e0e0e] text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#5c46f5]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">VIT Review</h1>
+      <header className="border-b border-[#1e1e1e]">
+        <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center">
+            <img 
+              src="/images/Review Scheduler.png" 
+              alt="Review Scheduler Logo" 
+              width={100} 
+              height={60} 
+              className="rounded-full"
+            />
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-gray-400">{user?.name}</span>
+            <span className="text-[#a0a0a0] text-sm">{user?.name}</span>
             <LogoutButton variant="minimal" />
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -391,10 +399,10 @@ export default function FacultyDashboard() {
           {/* Welcome message with fade-in animation */}
           <motion.div
             variants={fadeInVariants}
-            className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 rounded-xl p-8 mb-8 border border-indigo-800/50"
+            className="bg-[#141414] rounded-lg p-6 mb-8 border border-[#1e1e1e]"
           >
-            <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name || 'Faculty'}</h1>
-            <p className="text-gray-300 mb-4">
+            <h1 className="text-xl font-medium mb-2">Welcome back, {user?.name || 'Faculty'}</h1>
+            <p className="text-[#a0a0a0] text-sm mb-4">
               Manage your classrooms, review schedules, and student submissions from this dashboard.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -402,8 +410,8 @@ export default function FacultyDashboard() {
                 onClick={() => setActiveTab('overview')}
                 className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   activeTab === 'overview'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-[#5c46f5] text-white'
+                    : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'
                 }`}
               >
                 <Grid size={16} />
@@ -413,8 +421,8 @@ export default function FacultyDashboard() {
                 onClick={() => setActiveTab('timetable')}
                 className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   activeTab === 'timetable'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-[#5c46f5] text-white'
+                    : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'
                 }`}
               >
                 <Calendar size={16} />
@@ -424,8 +432,8 @@ export default function FacultyDashboard() {
                 onClick={() => setActiveTab('slots')}
                 className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   activeTab === 'slots'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-[#5c46f5] text-white'
+                    : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'
                 }`}
               >
                 <Clock size={16} />
@@ -435,8 +443,8 @@ export default function FacultyDashboard() {
                 onClick={() => setActiveTab('submissions')}
                 className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   activeTab === 'submissions'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-[#5c46f5] text-white'
+                    : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'
                 }`}
               >
                 <FileText size={16} />
@@ -454,69 +462,69 @@ export default function FacultyDashboard() {
                 </div>
                 <button
                   onClick={() => setShowCreateClassroomForm(true)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+                  className="ml-auto bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
                 >
-                  <Plus size={18} />
-                  New Classroom
+                  <Plus size={16} />
+                  Create Classroom
                 </button>
               </motion.div>
 
               {/* Stats grid */}
               <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-5">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-indigo-900/30 rounded-lg">
-                      <Users className="text-indigo-400" size={24} />
+                    <div className="p-3 bg-[#1a1a1a] rounded-lg">
+                      <Users className="text-[#a0a0a0]" size={20} />
                     </div>
-                    <span className="text-xs text-gray-500">Total</span>
+                    <span className="text-xs text-[#808080]">Total</span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-1">{classrooms.length}</h3>
-                  <p className="text-gray-400 text-sm">Classrooms</p>
+                  <h3 className="text-xl font-medium mb-1">{classrooms.length}</h3>
+                  <p className="text-[#a0a0a0] text-sm">Classrooms</p>
                 </div>
                 
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-5">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-emerald-900/30 rounded-lg">
-                      <Users className="text-emerald-400" size={24} />
+                    <div className="p-3 bg-[#1a1a1a] rounded-lg">
+                      <Users className="text-[#a0a0a0]" size={20} />
                     </div>
-                    <span className="text-xs text-gray-500">Total</span>
+                    <span className="text-xs text-[#808080]">Total</span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-1">
+                  <h3 className="text-xl font-medium mb-1">
                     {classrooms.reduce((sum, classroom) => sum + (classroom.students_count || 0), 0)}
                   </h3>
-                  <p className="text-gray-400 text-sm">Students</p>
+                  <p className="text-[#a0a0a0] text-sm">Students</p>
                 </div>
                 
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-5">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-purple-900/30 rounded-lg">
-                      <Calendar className="text-purple-400" size={24} />
+                    <div className="p-3 bg-[#1a1a1a] rounded-lg">
+                      <Calendar className="text-[#a0a0a0]" size={20} />
                     </div>
-                    <span className="text-xs text-gray-500">Total</span>
+                    <span className="text-xs text-[#808080]">Total</span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-1">{reviewSlots.length}</h3>
-                  <p className="text-gray-400 text-sm">Review Slots</p>
+                  <h3 className="text-xl font-medium mb-1">{reviewSlots.length}</h3>
+                  <p className="text-[#a0a0a0] text-sm">Review Slots</p>
                 </div>
               </motion.div>
 
               <motion.div variants={itemVariants}>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">Your Classrooms</h3>
-                  <button className="text-sm text-indigo-400 hover:text-indigo-300">View all</button>
+                  <h3 className="text-lg font-medium">Your Classrooms</h3>
+                  <button className="text-sm text-[#5c46f5] hover:text-[#4c38e6] transition-colors">View all</button>
                 </div>
                 
                 {classrooms.length === 0 ? (
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <BookOpen className="text-gray-400" size={24} />
+                  <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-6 text-center">
+                    <div className="w-14 h-14 bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="text-[#a0a0a0]" size={20} />
                     </div>
-                    <h4 className="text-lg font-medium mb-2">No classrooms yet</h4>
-                    <p className="text-gray-400 mb-6">Create your first classroom to get started</p>
+                    <h4 className="text-base font-medium mb-2">No classrooms yet</h4>
+                    <p className="text-[#a0a0a0] text-sm mb-5">Create your first classroom to get started</p>
                     <button
                       onClick={() => setShowCreateClassroomForm(true)}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2"
+                      className="bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 text-sm transition-colors"
                     >
-                      <Plus size={18} />
+                      <Plus size={16} />
                       Create Classroom
                     </button>
                   </div>
@@ -526,7 +534,7 @@ export default function FacultyDashboard() {
                       <motion.div 
                         key={classroom.id} 
                         whileHover={{ scale: 1.02 }}
-                        className="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-xl p-6 hover:border-indigo-600 transition-all cursor-pointer shadow-lg hover:shadow-indigo-900/20"
+                        className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-5 hover:border-[#5c46f5] transition-all cursor-pointer shadow-md hover:shadow-[#5c46f5]/10"
                         onClick={() => {
                           setSelectedClassroom(classroom);
                           setShowClassroomDetailsModal(true);
@@ -534,36 +542,36 @@ export default function FacultyDashboard() {
                       >
                         <div className="flex justify-between items-start mb-5">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-900/30 rounded-lg">
-                              <BookOpen className="text-indigo-400" size={18} />
+                            <div className="p-2 bg-[#1a1a1a] rounded-lg">
+                              <BookOpen className="text-[#a0a0a0]" size={16} />
                             </div>
-                            <h4 className="font-bold text-lg">{classroom.name}</h4>
+                            <h4 className="font-medium text-base">{classroom.name}</h4>
                           </div>
-                          <span className="px-3 py-1 bg-indigo-900/30 border border-indigo-800/50 rounded-full text-xs font-mono font-bold text-indigo-400">
+                          <span className="px-3 py-1 bg-[#1a1a1a] border border-[#252525] rounded-full text-xs font-mono text-[#5c46f5]">
                             {classroom.link_code}
                           </span>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4 mb-5">
-                          <div className="bg-gray-800/50 rounded-lg p-3 flex flex-col items-center justify-center">
+                          <div className="bg-[#1a1a1a] rounded-lg p-3 flex flex-col items-center justify-center">
                             <div className="flex items-center gap-2 mb-1">
-                              <Users size={14} className="text-blue-400" />
-                              <span className="text-gray-400 text-xs">Students</span>
+                              <Users size={14} className="text-[#a0a0a0]" />
+                              <span className="text-[#808080] text-xs">Students</span>
                             </div>
-                            <span className="text-xl font-bold">
+                            <span className="text-lg font-medium">
                               {classroom.students_count || 0}
                             </span>
                           </div>
-                          <div className="bg-gray-800/50 rounded-lg p-3 flex flex-col items-center justify-center">
+                          <div className="bg-[#1a1a1a] rounded-lg p-3 flex flex-col items-center justify-center">
                             <div className="flex items-center gap-2 mb-1">
-                              <Users size={14} className="text-amber-400" />
-                              <span className="text-gray-400 text-xs">Teams</span>
+                              <Users size={14} className="text-[#a0a0a0]" />
+                              <span className="text-[#808080] text-xs">Teams</span>
                             </div>
-                            <span className="text-xl font-bold">{classroom.teams_count || 0}</span>
+                            <span className="text-lg font-medium">{classroom.teams_count || 0}</span>
                           </div>
                         </div>
                         
-                        <button className="w-full py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-800/50 rounded-lg text-sm font-medium text-indigo-300 transition-colors flex items-center justify-center gap-2">
+                        <button className="w-full py-2 bg-[#1a1a1a] hover:bg-[#252525] border border-[#252525] rounded-lg text-sm text-[#5c46f5] transition-colors flex items-center justify-center gap-2">
                           <span>View Details</span>
                         </button>
                       </motion.div>
@@ -698,7 +706,7 @@ export default function FacultyDashboard() {
                   {/* Success message and form */}
                   {parseSuccess && (
                     <div className="mt-3 space-y-3">
-                      <div className="flex items-center gap-2 text-green-400 text-xs bg-green-900/20 p-2 rounded-lg">
+                      <div className="flex items-center gap-2 text-[#4ade80] text-xs bg-[#1a1a1a] p-2 rounded-lg">
                         <CheckCircle size={14} />
                         <span>Timetable parsed successfully! {allFreeSlots.length} free slots found</span>
                       </div>
@@ -706,11 +714,11 @@ export default function FacultyDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {/* Classroom Selection */}
                         <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Classroom</label>
+                          <label className="text-xs text-[#a0a0a0] mb-1 block">Classroom</label>
                           <select
                             value={selectedClassroomId || ''}
                             onChange={(e) => setSelectedClassroomId(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                            className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg p-2 text-white text-sm focus:border-[#5c46f5] focus:outline-none transition-colors"
                           >
                             <option value="">Select a classroom</option>
                             {classrooms.map((classroom) => (
@@ -723,11 +731,11 @@ export default function FacultyDashboard() {
                         
                         {/* Review Stage */}
                         <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Review Stage</label>
+                          <label className="text-xs text-[#a0a0a0] mb-1 block">Review Stage</label>
                           <select
                             value={reviewStage}
                             onChange={(e) => setReviewStage(e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                            className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg p-2 text-white text-sm focus:border-[#5c46f5] focus:outline-none transition-colors"
                           >
                             <option value="Review 1">Review 1</option>
                             <option value="Review 2">Review 2</option>
@@ -738,12 +746,12 @@ export default function FacultyDashboard() {
                       
                       {/* Booking Deadline */}
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Booking Deadline</label>
+                        <label className="text-xs text-[#a0a0a0] mb-1 block">Booking Deadline</label>
                         <input
                           type="date"
-                          value={bookingDeadline || ''}
+                          value={bookingDeadline}
                           onChange={(e) => setBookingDeadline(e.target.value)}
-                          className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                          className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg p-2 text-white text-sm focus:border-[#5c46f5] focus:outline-none transition-colors"
                         />
                       </div>
                       

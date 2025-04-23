@@ -11,6 +11,7 @@ interface Activity {
   entity_name: string;
   details: any;
   created_at: string;
+  users?: any;
 }
 
 interface ActivityFeedProps {
@@ -75,7 +76,8 @@ export default function ActivityFeed({ userRole, limit = 5 }: ActivityFeedProps)
           throw error;
         }
 
-        setActivities(data || []);
+        // Type assertion to ensure data matches the Activity interface
+        setActivities((data || []) as unknown as Activity[]);
       } catch (error) {
         console.error('Error fetching activities:', error);
       } finally {
@@ -99,7 +101,7 @@ export default function ActivityFeed({ userRole, limit = 5 }: ActivityFeedProps)
       case 'submission_created':
         return <FileText size={16} className="text-amber-400" />;
       default:
-        return <Clock size={16} className="text-gray-400" />;
+        return <Clock size={14} className="text-[#a0a0a0]" />;
     }
   };
 
@@ -112,14 +114,14 @@ export default function ActivityFeed({ userRole, limit = 5 }: ActivityFeedProps)
         return (
           <>
             {isCurrentUser ? 'You' : userName} created a new classroom{' '}
-            <span className="text-indigo-400">{activity.entity_name}</span>
+            <span className="text-blue-400">{activity.entity_name}</span>
           </>
         );
       case 'classroom_joined':
         return (
           <>
             {isCurrentUser ? 'You' : userName} joined classroom{' '}
-            <span className="text-indigo-400">{activity.entity_name}</span>
+            <span className="text-blue-400">{activity.entity_name}</span>
           </>
         );
       case 'team_created':
@@ -215,14 +217,14 @@ export default function ActivityFeed({ userRole, limit = 5 }: ActivityFeedProps)
 
   if (loading) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="p-5">
         <div className="animate-pulse space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <div className="p-2 bg-gray-800 rounded-lg mt-1 w-8 h-8"></div>
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-7 h-7 bg-[#1e1e1e] rounded-full flex items-center justify-center"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-800 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-800 rounded w-1/4"></div>
+                <div className="h-3 bg-[#1e1e1e] rounded w-3/4 mb-2"></div>
+                <div className="h-2 bg-[#1e1e1e] rounded w-1/4"></div>
               </div>
             </div>
           ))}
@@ -233,26 +235,29 @@ export default function ActivityFeed({ userRole, limit = 5 }: ActivityFeedProps)
 
   if (activities.length === 0) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <div className="text-center py-6 text-gray-500">
-          <Clock size={24} className="mx-auto mb-2" />
-          <p>No recent activity</p>
+      <div className="p-5">
+        <div className="text-center py-6">
+          <div className="w-10 h-10 bg-[#1e1e1e] rounded-full flex items-center justify-center mx-auto mb-3">
+            <Clock size={18} className="text-[#a0a0a0]" />
+          </div>
+          <p className="text-sm font-medium mb-1">No recent activity</p>
+          <p className="text-[#a0a0a0] text-xs">Your activity will appear here</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <div className="space-y-6">
+    <div className="p-5">
+      <div className="space-y-5">
         {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-4">
-            <div className="p-2 bg-gray-800/50 rounded-lg mt-1">
+          <div key={activity.id} className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-full bg-[#1e1e1e] flex items-center justify-center">
               {getActivityIcon(activity.activity_type)}
             </div>
             <div>
-              <p className="text-sm">{getActivityText(activity)}</p>
-              <p className="text-gray-500 text-xs mt-1">{formatTime(activity.created_at)}</p>
+              <p className="text-xs">{getActivityText(activity)}</p>
+              <p className="text-[#a0a0a0] text-[10px] mt-1">{formatTime(activity.created_at)}</p>
             </div>
           </div>
         ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Loader2 } from 'lucide-react';
 
 interface JoinClassroomFormProps {
@@ -72,37 +72,100 @@ export default function JoinClassroomForm({ onSuccess, onCancel }: JoinClassroom
     }
   };
 
+  // Define animation variants
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 1,
+        ease: "easeOut"
+      }
+    },
+    exit: { 
+      opacity: 0,
+      transition: { 
+        duration: 1,
+        ease: "easeIn"
+      }
+    }
+  };
+
+  const modalVariants = {
+    hidden: { 
+      y: 20, 
+      opacity: 0,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 500
+      }
+    },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 500,
+        delay: 0.05
+      }
+    },
+    exit: { 
+      y: 20, 
+      opacity: 0,
+      transition: {
+        type: "tween",
+        duration: 1,
+        ease: "easeIn"
+      }
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="bg-gray-900 border border-gray-800 rounded-xl p-6"
+      variants={overlayVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={onCancel}
     >
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold">Join Classroom</h3>
-        {onCancel && (
-          <button 
-            onClick={onCancel}
-            className="text-gray-400 hover:text-white"
-          >
-            <X size={20} />
-          </button>
-        )}
+      <motion.div
+        variants={modalVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#141414] border border-[#1e1e1e] rounded-lg w-full max-w-md overflow-hidden"
+      >
+      <div className="p-6 border-b border-[#1e1e1e]">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">Join Classroom</h3>
+          {onCancel && (
+            <button 
+              onClick={onCancel}
+              className="w-8 h-8 rounded-full bg-[#1e1e1e] hover:bg-[#252525] flex items-center justify-center transition-colors duration-200"
+            >
+              <X size={14} className="text-[#a0a0a0]" />
+            </button>
+          )}
+        </div>
       </div>
+      <div className="p-6">
 
       {success ? (
-        <div className="flex flex-col items-center justify-center py-6">
-          <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-            <Check className="h-8 w-8 text-green-400" />
+        <div className="flex flex-col items-center justify-center py-4">
+          <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-4">
+            <Check className="h-8 w-8 text-white" />
           </div>
-          <h4 className="text-lg font-medium mb-2">Successfully joined classroom!</h4>
-          <p className="text-gray-400 text-center">You can now create or join teams in this classroom</p>
+          <h4 className="text-base font-medium mb-2">Successfully joined classroom!</h4>
+          <p className="text-[#a0a0a0] text-sm text-center">You can now create or join teams in this classroom</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label htmlFor="linkCode" className="block text-sm font-medium text-gray-300 mb-1">
+          <div className="mb-5">
+            <label htmlFor="linkCode" className="block text-sm font-medium text-white mb-2">
               Classroom Link Code
             </label>
             <input
@@ -113,44 +176,44 @@ export default function JoinClassroomForm({ onSuccess, onCancel }: JoinClassroom
               placeholder="XXX-XXX"
               maxLength={7}
               pattern="[A-Za-z0-9]{3}-?[A-Za-z0-9]{3}"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase"
+              className="w-full bg-[#1a1a1a] border border-[#252525] rounded-md px-3 py-2 text-white focus:outline-none focus:border-[#303030] transition-colors duration-200 uppercase"
               disabled={isSubmitting}
             />
             {error && (
-              <p className="mt-2 text-red-400 text-sm">{error}</p>
+              <p className="mt-2 text-[#a0a0a0] text-xs">{error}</p>
             )}
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="mr-4 px-4 py-2 text-gray-300 hover:text-white"
+                className="px-3 py-1.5 text-[#a0a0a0] hover:text-white text-sm transition-colors duration-200"
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
             )}
-            <motion.button
+            <button
               type="submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              className="bg-[#1e1e1e] text-white px-3 py-1.5 rounded-md text-sm hover:bg-[#252525] transition-colors duration-200 flex items-center gap-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Joining...
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Joining...</span>
                 </>
               ) : (
                 'Join Classroom'
               )}
-            </motion.button>
+            </button>
           </div>
         </form>
       )}
+      </div>
+    </motion.div>
     </motion.div>
   );
 }

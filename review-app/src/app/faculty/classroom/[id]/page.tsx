@@ -123,11 +123,11 @@ export default function ClassroomManagementPage() {
 
   if (error || !classroom) {
     return (
-      <div className="min-h-screen bg-black text-white p-8">
+      <div className="min-h-screen bg-[#0e0e0e] text-white p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-4">Error</h1>
-          <p className="text-red-400">{error || 'Classroom not found'}</p>
-          <Link href="/faculty/dashboard" className="text-indigo-400 mt-4 inline-block">
+          <h1 className="text-xl font-medium mb-4">Error</h1>
+          <p className="text-[#f87171] mb-4">{error || 'Classroom not found'}</p>
+          <Link href="/faculty/dashboard" className="text-[#5c46f5] hover:text-[#4c38e6] transition-colors mt-4 inline-block text-sm">
             Return to Dashboard
           </Link>
         </div>
@@ -136,8 +136,8 @@ export default function ClassroomManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -148,27 +148,27 @@ export default function ClassroomManagementPage() {
             <div className="flex items-center gap-4 mb-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 rounded-full bg-gray-900 hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] transition-colors"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} />
               </button>
               <div>
-                <h1 className="text-2xl font-bold">{classroom.name}</h1>
-                <p className="text-gray-400">Classroom Management</p>
+                <h1 className="text-xl font-medium">{classroom.name}</h1>
+                <p className="text-[#a0a0a0] text-sm">Classroom Management</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="bg-indigo-900/30 text-indigo-300 px-4 py-2 rounded-lg flex items-center gap-2">
-                <Users size={18} />
+            <div className="flex flex-wrap gap-3 mb-6">
+              <div className="bg-[#1a1a1a] text-[#a0a0a0] px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-[#252525]">
+                <Users size={16} />
                 <span>{students.length} students</span>
               </div>
-              <div className="bg-emerald-900/30 text-emerald-300 px-4 py-2 rounded-lg flex items-center gap-2">
-                <School size={18} />
+              <div className="bg-[#1a1a1a] text-[#a0a0a0] px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-[#252525]">
+                <School size={16} />
                 <span>{teams.length} teams</span>
               </div>
-              <div className="bg-gray-800 px-4 py-2 rounded-lg flex items-center gap-2">
-                <Calendar size={18} className="text-purple-400" />
+              <div className="bg-[#1a1a1a] text-[#a0a0a0] px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-[#252525]">
+                <Calendar size={16} />
                 <span>
                   {Object.keys(classroom.review_deadlines || {}).length > 0
                     ? `${Object.keys(classroom.review_deadlines).length} deadlines`
@@ -178,12 +178,12 @@ export default function ClassroomManagementPage() {
             </div>
 
             {/* Invitation Code */}
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-400 mb-2">Classroom Invitation Code</p>
+            <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-4 mb-6">
+              <p className="text-xs text-[#a0a0a0] mb-2">Classroom Invitation Code</p>
               <div className="flex items-center justify-between">
-                <code className="font-mono text-indigo-300 text-lg">{classroom.link_code}</code>
+                <code className="font-mono text-[#5c46f5] text-base">{classroom.link_code}</code>
                 <button
-                  className="text-indigo-400 hover:text-indigo-300 p-2"
+                  className="text-[#5c46f5] hover:text-[#4c38e6] transition-colors p-2 text-sm"
                   onClick={() => {
                     navigator.clipboard.writeText(classroom.link_code);
                     alert('Invitation code copied to clipboard!');
@@ -195,13 +195,13 @@ export default function ClassroomManagementPage() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-800 mb-6">
+            <div className="border-b border-[#1e1e1e] mb-6">
               <div className="flex gap-6">
                 <button
                   className={`pb-3 px-1 ${
                     activeTab === 'students'
-                      ? 'text-white border-b-2 border-indigo-500 font-medium'
-                      : 'text-gray-400 hover:text-gray-300'
+                      ? 'text-white border-b-2 border-[#5c46f5] font-medium'
+                      : 'text-[#a0a0a0] hover:text-white transition-colors'
                   }`}
                   onClick={() => setActiveTab('students')}
                 >
@@ -210,8 +210,8 @@ export default function ClassroomManagementPage() {
                 <button
                   className={`pb-3 px-1 ${
                     activeTab === 'teams'
-                      ? 'text-white border-b-2 border-indigo-500 font-medium'
-                      : 'text-gray-400 hover:text-gray-300'
+                      ? 'text-white border-b-2 border-[#5c46f5] font-medium'
+                      : 'text-[#a0a0a0] hover:text-white transition-colors'
                   }`}
                   onClick={() => setActiveTab('teams')}
                 >
@@ -224,44 +224,44 @@ export default function ClassroomManagementPage() {
           {/* Students Tab */}
           {activeTab === 'students' && (
             <motion.div variants={itemVariants}>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-                  <h2 className="font-medium">All Students</h2>
-                  <span className="text-sm text-gray-400">{students.length} total</span>
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden">
+                <div className="p-4 border-b border-[#1e1e1e] flex justify-between items-center">
+                  <h2 className="font-medium text-base">All Students</h2>
+                  <span className="text-xs text-[#a0a0a0]">{students.length} total</span>
                 </div>
 
                 {!students || students.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">
-                    <UserX size={32} className="mx-auto mb-2 text-gray-600" />
-                    <p>No students have joined this classroom yet</p>
-                    <p className="text-sm mt-2">Share the invitation code with your students</p>
+                  <div className="p-6 text-center text-[#a0a0a0]">
+                    <UserX size={24} className="mx-auto mb-3 text-[#505050]" />
+                    <p className="text-sm">No students have joined this classroom yet</p>
+                    <p className="text-xs mt-2">Share the invitation code with your students</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-800/50 text-left">
+                      <thead className="bg-[#1a1a1a] text-left">
                         <tr>
-                          <th className="px-4 py-3 text-sm font-medium text-gray-400">Name</th>
-                          <th className="px-4 py-3 text-sm font-medium text-gray-400">Roll Number</th>
-                          <th className="px-4 py-3 text-sm font-medium text-gray-400">Email</th>
-                          <th className="px-4 py-3 text-sm font-medium text-gray-400">Team</th>
+                          <th className="px-4 py-3 text-xs font-medium text-[#a0a0a0]">Name</th>
+                          <th className="px-4 py-3 text-xs font-medium text-[#a0a0a0]">Roll Number</th>
+                          <th className="px-4 py-3 text-xs font-medium text-[#a0a0a0]">Email</th>
+                          <th className="px-4 py-3 text-xs font-medium text-[#a0a0a0]">Team</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-800">
+                      <tbody className="divide-y divide-[#1e1e1e]">
                         {students.map((student) => (
-                          <tr key={student.id} className="hover:bg-gray-800/50">
-                            <td className="px-4 py-3">{student.name || 'Unknown'}</td>
-                            <td className="px-4 py-3 font-mono text-sm text-gray-300">
+                          <tr key={student.id} className="hover:bg-[#1a1a1a] transition-colors">
+                            <td className="px-4 py-3 text-sm">{student.name || 'Unknown'}</td>
+                            <td className="px-4 py-3 font-mono text-xs text-[#a0a0a0]">
                               {student.roll_number || '-'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-300">{student.email || '-'}</td>
+                            <td className="px-4 py-3 text-xs text-[#a0a0a0]">{student.email || '-'}</td>
                             <td className="px-4 py-3">
                               {student.team ? (
-                                <span className="bg-emerald-900/30 text-emerald-300 px-2 py-1 rounded text-sm">
+                                <span className="bg-[#1a1a1a] text-[#5c46f5] px-2 py-1 rounded text-xs border border-[#252525]">
                                   {student.team.name}
                                 </span>
                               ) : (
-                                <span className="bg-gray-800 text-gray-400 px-2 py-1 rounded text-sm">
+                                <span className="bg-[#1a1a1a] text-[#a0a0a0] px-2 py-1 rounded text-xs border border-[#252525]">
                                   No Team
                                 </span>
                               )}
@@ -279,56 +279,56 @@ export default function ClassroomManagementPage() {
           {/* Teams Tab */}
           {activeTab === 'teams' && (
             <motion.div variants={itemVariants}>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mb-6">
-                <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-                  <h2 className="font-medium">All Teams</h2>
-                  <span className="text-sm text-gray-400">{teams.length} total</span>
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden mb-6">
+                <div className="p-4 border-b border-[#1e1e1e] flex justify-between items-center">
+                  <h2 className="font-medium text-base">All Teams</h2>
+                  <span className="text-xs text-[#a0a0a0]">{teams.length} total</span>
                 </div>
 
                 {!teams || teams.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">
-                    <Users size={32} className="mx-auto mb-2 text-gray-600" />
-                    <p>No teams have been created in this classroom yet</p>
-                    <p className="text-sm mt-2">Students can create teams after joining</p>
+                  <div className="p-6 text-center text-[#a0a0a0]">
+                    <Users size={24} className="mx-auto mb-3 text-[#505050]" />
+                    <p className="text-sm">No teams have been created in this classroom yet</p>
+                    <p className="text-xs mt-2">Students can create teams after joining</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-800">
+                  <div className="divide-y divide-[#1e1e1e]">
                     {teams.map((team) => (
                       <div key={team.id} className="p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="font-medium text-lg">{team.name || 'Unnamed Team'}</h3>
+                            <h3 className="font-medium text-base">{team.name || 'Unnamed Team'}</h3>
                             {team.project_title && (
-                              <p className="text-gray-400 text-sm">{team.project_title}</p>
+                              <p className="text-[#a0a0a0] text-xs">{team.project_title}</p>
                             )}
                           </div>
-                          <span className="bg-indigo-900/30 text-indigo-300 px-3 py-1 rounded-lg text-sm">
+                          <span className="bg-[#1a1a1a] text-[#a0a0a0] px-3 py-1 rounded-lg text-xs border border-[#252525]">
                             {team.members_count || 0} members
                           </span>
                         </div>
 
                         {team.members && team.members.length > 0 ? (
-                          <div className="bg-gray-800/50 rounded-lg overflow-hidden">
+                          <div className="bg-[#1a1a1a] rounded-lg overflow-hidden">
                             <table className="w-full">
-                              <thead className="bg-gray-800 text-left">
+                              <thead className="bg-[#1a1a1a] text-left">
                                 <tr>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-400">Name</th>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-400">Roll Number</th>
-                                  <th className="px-4 py-2 text-xs font-medium text-gray-400">Role</th>
+                                  <th className="px-4 py-2 text-xs font-medium text-[#a0a0a0]">Name</th>
+                                  <th className="px-4 py-2 text-xs font-medium text-[#a0a0a0]">Roll Number</th>
+                                  <th className="px-4 py-2 text-xs font-medium text-[#a0a0a0]">Role</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-gray-700/30">
+                              <tbody className="divide-y divide-[#252525]">
                                 {team.members.map((member) => (
-                                  <tr key={member.id} className="hover:bg-gray-800/70">
-                                    <td className="px-4 py-2">{member.name || 'Unknown'}</td>
-                                    <td className="px-4 py-2 font-mono text-xs text-gray-300">
+                                  <tr key={member.id} className="hover:bg-[#252525] transition-colors">
+                                    <td className="px-4 py-2 text-sm">{member.name || 'Unknown'}</td>
+                                    <td className="px-4 py-2 font-mono text-xs text-[#a0a0a0]">
                                       {member.roll_number || '-'}
                                     </td>
                                     <td className="px-4 py-2">
                                       <span className={`px-2 py-1 rounded text-xs ${
                                         member.role === 'leader' 
-                                          ? 'bg-indigo-900/30 text-indigo-300' 
-                                          : 'bg-gray-800 text-gray-300'
+                                          ? 'bg-[#1a1a1a] text-[#5c46f5] border border-[#252525]' 
+                                          : 'bg-[#1a1a1a] text-[#a0a0a0] border border-[#252525]'
                                       }`}>
                                         {member.role || 'member'}
                                       </span>

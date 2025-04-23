@@ -301,10 +301,10 @@ export default function ClassroomTeamsPage() {
   if (!classroom) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 max-w-md">
-          <h2 className="text-xl font-bold mb-4">Classroom Not Found</h2>
-          <p className="text-gray-300 mb-6">The classroom you're looking for doesn't exist or you don't have access to it.</p>
-          <Link href="/student/dashboard" className="bg-indigo-600 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2">
+          <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-8 max-w-md">
+          <h2 className="text-lg font-medium mb-4">Classroom Not Found</h2>
+          <p className="text-[#a0a0a0] mb-6">The classroom you're looking for doesn't exist or you don't have access to it.</p>
+          <Link href="/student/dashboard" className="bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 text-sm transition-colors">
             <ArrowLeft size={18} />
             Back to Dashboard
           </Link>
@@ -314,7 +314,7 @@ export default function ClassroomTeamsPage() {
   }
   
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <motion.div
           initial="hidden"
@@ -323,34 +323,34 @@ export default function ClassroomTeamsPage() {
         >
           {/* Header */}
           <motion.div variants={itemVariants} className="mb-8">
-            <Link href={`/student/classroom/${classroomId}`} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-2 mb-4">
-              <ArrowLeft size={18} />
-              Back to Classroom
+            <Link href="/student/dashboard" className="text-[#a0a0a0] hover:text-white inline-flex items-center gap-2 mb-4 transition-colors">
+              <ArrowLeft size={16} />
+              Back to Dashboard
             </Link>
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-2xl font-bold">{classroom.name}: Teams</h2>
-                <p className="text-gray-400">Create or join a team to book review slots</p>
+                <h2 className="text-xl font-medium">{classroom.name}: Teams</h2>
+                <p className="text-[#a0a0a0] text-sm mt-1">Create or join a team to book review slots</p>
               </div>
               {!userTeam && (
                 <div className="flex gap-3">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
-                    onClick={() => setShowCreateTeamForm(true)}
+                    className="bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
+                    onClick={() => router.push(`/student/classroom/${classroomId}/slots`)}
                   >
-                    <Users size={18} />
-                    Create Team
+                    <Clock size={16} />
+                    Book Review Slot
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
-                    onClick={() => setShowJoinTeamForm(true)}
+                    className="bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors"
+                    onClick={() => setShowCreateTeamForm(true)}
                   >
-                    <UserPlus size={18} />
-                    Join Team
+                    <Users size={16} />
+                    Create Team
                   </motion.button>
                 </div>
               )}
@@ -399,21 +399,21 @@ export default function ClassroomTeamsPage() {
           {/* User's Team */}
           {userTeam && (
             <motion.div variants={itemVariants} className="mb-8">
-              <h3 className="text-xl font-bold mb-4">Your Team</h3>
-              <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/20 rounded-xl p-5 border border-indigo-800/30 shadow-xl">
+              <h3 className="text-lg font-medium mb-3">Your Team</h3>
+              <div className="bg-[#141414] rounded-lg p-5 border border-[#1e1e1e]">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-bold">{userTeam.name}</h3>
+                    <h3 className="text-base font-medium">{userTeam.name}</h3>
                     {userTeam.project_title && (
-                      <p className="text-gray-400">{userTeam.project_title}</p>
+                      <p className="text-[#a0a0a0] text-sm mt-1">{userTeam.project_title}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-[#1a1a1a] text-[#a0a0a0] px-2 py-0.5 rounded-full">
                       {userTeam.current_members}/{userTeam.max_members} Members
                     </span>
                     {userTeam.is_leader && (
-                      <span className="text-xs bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-[#5c46f5]/10 text-[#a0a0a0] px-2 py-0.5 rounded-full ml-1">
                         Team Leader
                       </span>
                     )}
@@ -421,38 +421,38 @@ export default function ClassroomTeamsPage() {
                 </div>
                 
                 {userTeam.is_leader && (
-                  <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-lg p-3 mb-4">
+                  <div className="bg-[#1a1a1a] border border-[#1e1e1e] rounded-lg p-3 mb-4">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm text-gray-400 mb-1">Invitation Code</p>
-                        <p className="font-mono font-medium">{userTeam.invitation_code}</p>
+                        <p className="text-sm text-[#a0a0a0] mb-1">Invitation Code</p>
+                        <p className="font-mono text-sm">{userTeam.invitation_code}</p>
                       </div>
                       <button 
-                        className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                        className="bg-[#252525] hover:bg-[#303030] text-[#e0e0e0] px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
                         onClick={copyInvitationCode}
                       >
-                        {copiedCode ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
-                        {copiedCode ? 'Copied!' : 'Copy Code'}
+                        {copiedCode ? <CheckCircle size={14} className="text-[#a0a0a0]" /> : <Copy size={14} />}
+                        {copiedCode ? 'Copied' : 'Copy Code'}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-[#808080] mt-2">
                       Share this code with your teammates so they can join your team
                     </p>
                   </div>
                 )}
                 
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Team Members</h4>
-                  <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-800 rounded-lg divide-y divide-gray-800">
+                  <h4 className="text-sm text-[#a0a0a0] mb-2">Team Members</h4>
+                  <div className="bg-[#1a1a1a] border border-[#1e1e1e] rounded-lg divide-y divide-[#1e1e1e]">
                     {userTeam.members.map(member => (
                       <div key={member.id} className="p-3 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                          <div className="bg-gray-800 p-2 rounded-full">
-                            <Users size={16} className="text-indigo-400" />
+                          <div className="bg-[#252525] p-2 rounded-full">
+                            <Users size={14} className="text-[#a0a0a0]" />
                           </div>
-                          <span>{member.name}</span>
+                          <span className="text-sm">{member.name}</span>
                         </div>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-[#a0a0a0]">
                           {member.role === 'leader' ? 'Leader' : 'Member'}
                         </span>
                       </div>
@@ -463,7 +463,7 @@ export default function ClassroomTeamsPage() {
                 <div className="mt-4 flex justify-end">
                   <Link 
                     href={`/student/classroom/${classroomId}/slots`}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+                    className="bg-[#5c46f5] hover:bg-[#4c38e6] text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
                   >
                     <Clock size={16} />
                     Book Review Slot
@@ -520,7 +520,7 @@ export default function ClassroomTeamsPage() {
                                   In a team
                                 </span>
                               ) : (
-                                <span className="px-2 py-1 text-xs rounded-full bg-gray-800 text-gray-400 w-fit">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] text-[#a0a0a0]">
                                   No team
                                 </span>
                               )}
@@ -529,7 +529,7 @@ export default function ClassroomTeamsPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
+                          <td colSpan={3} className="px-6 py-4 text-center text-[#a0a0a0]">
                             No students found
                           </td>
                         </tr>
@@ -544,31 +544,31 @@ export default function ClassroomTeamsPage() {
           {/* Other Teams */}
           {teams.length > 0 && (
             <motion.div variants={itemVariants}>
-              <h3 className="text-xl font-bold mb-4">All Teams</h3>
+              <h3 className="text-lg font-medium mb-3">All Teams</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {teams.map(team => (
                   <div 
                     key={team.id} 
-                    className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:bg-gray-800/70 transition-colors"
+                    className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-4 hover:bg-[#1a1a1a] transition-colors"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="font-bold">{team.name}</h4>
+                        <h4 className="font-medium text-base">{team.name}</h4>
                         {team.project_title && (
-                          <p className="text-gray-400 text-sm">{team.project_title}</p>
+                          <p className="text-sm text-[#a0a0a0] mt-1">{team.project_title}</p>
                         )}
                       </div>
-                      <span className="text-xs bg-indigo-900/30 text-indigo-400 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-[#1a1a1a] text-[#a0a0a0] px-2 py-0.5 rounded-full">
                         {team.current_members}/{team.max_members} Members
                       </span>
                     </div>
                     <div className="mt-3">
-                      <div className="text-xs text-gray-500 mb-1">Team Leader</div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-gray-800 p-1.5 rounded-full">
-                          <Users size={14} className="text-indigo-400" />
+                      <div className="text-xs text-[#808080] mb-2">Team Leader</div>
+                      <div className="flex items-center gap-2 bg-[#1a1a1a] p-2 rounded-lg">
+                        <div className="bg-[#252525] p-1.5 rounded-full">
+                          <Users size={14} className="text-[#a0a0a0]" />
                         </div>
-                        {team.members.find(m => m.role === 'leader')?.name || 'Unknown'}
+                        <span className="text-sm">{team.members.find(m => m.role === 'leader')?.name || 'Unknown'}</span>
                       </div>
                     </div>
                   </div>

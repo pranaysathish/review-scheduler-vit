@@ -17,6 +17,11 @@
 - Rationale: Allows flexibility in choosing the CI/CD platform based on team preferences and available resources
 - Implications: Team can select the most appropriate platform without additional configuration work
 
+[2025-04-23 00:59:48] - **Direct Queries Instead of Foreign Key Relationships**
+- Decision: Replace nested relationship queries with direct, separate queries
+- Rationale: The database schema doesn't have properly defined relationships between classrooms and teams
+- Implications: More reliable data fetching but potentially less efficient than proper foreign key relationships
+
 ## Architecture Decisions
 
 [2025-04-22 20:26:28] - **Database-Level Student Count Calculation**
@@ -24,9 +29,24 @@
 - Rationale: More efficient and accurate counting, especially for complex relationships
 - Implications: Reduced load on the application server, more consistent data across different views
 
+[2025-04-23 00:59:48] - **Modular API Route Structure**
+- Decision: Create dedicated API routes for specific data needs (e.g., teams for a classroom)
+- Rationale: Avoids complex nested queries that rely on database relationships
+- Implications: Better separation of concerns, more maintainable code, but more API endpoints to manage
+
 ## Implementation Decisions
 
 [2025-04-22 20:26:28] - **Error Handling for API Endpoints**
 - Decision: Implement graceful fallbacks for API endpoints that might not exist or return errors
 - Rationale: Prevents application crashes when optional features are not available
 - Implications: Better user experience, but requires careful testing to ensure fallbacks work correctly
+
+[2025-04-23 00:59:48] - **Enhanced Faculty Name Fetching**
+- Decision: Implement multi-tier approach to fetch faculty names with fallbacks
+- Rationale: Ensures faculty names are displayed correctly even when primary query fails
+- Implications: More robust user experience but slightly more complex code
+
+[2025-04-23 00:59:48] - **Tabular Display for Booked Review Slots**
+- Decision: Implement a table view for displaying booked review slots in the team page
+- Rationale: Provides clear, organized presentation of review schedule information
+- Implications: Better user experience for students to track their upcoming reviews

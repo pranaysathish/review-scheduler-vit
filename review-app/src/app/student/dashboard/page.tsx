@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Calendar, Users, FileText, Clock, School, X } from 'lucide-react';
 import Link from 'next/link';
@@ -31,6 +32,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [showClassroomDetailsModal, setShowClassroomDetailsModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
   const supabase = createClientComponentClient();
 
@@ -459,49 +461,63 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#0e0e0e] text-white">
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">VIT Review</h1>
+      <header className="border-b border-[#1e1e1e]">
+        <div className="container mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center">
+            <Image 
+              src="/images/Review Scheduler.png" 
+              alt="Review Scheduler Logo" 
+              width={100} 
+              height={60} 
+              className="rounded-full"
+            />
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-gray-400">{user?.name}</span>
+            <button 
+              onClick={() => setShowProfileModal(true)}
+              className="w-8 h-8 rounded-full bg-[#1e1e1e] hover:bg-[#252525] flex items-center justify-center transition-colors duration-200 relative group"
+            >
+              <span className="absolute -bottom-8 right-0 bg-[#252525] text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">View Profile</span>
+              <Users size={14} className="text-[#a0a0a0]" />
+            </button>
             <LogoutButton variant="minimal" />
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <motion.div 
           initial="hidden"
           animate="visible"
           variants={containerVariants}
           className="mb-8"
         >
-          <motion.div variants={itemVariants} className="flex justify-between items-center mb-6">
+          <motion.div variants={itemVariants} className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-2xl font-bold">Student Dashboard</h2>
-              <p className="text-gray-400">Manage your classrooms, teams, and review schedules</p>
+              <h2 className="text-2xl font-medium">Hello, {user?.name?.split(' ')[0] || 'Student'} <span className="text-blue-400">•</span></h2>
+              <p className="text-[#a0a0a0] text-sm mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
             </div>
             <div className="flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-[#1e1e1e] hover:bg-[#252525] text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-colors duration-200"
                 onClick={() => setShowJoinForm(true)}
               >
-                <School size={18} />
+                <School size={16} />
                 Join Classroom
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-2 font-medium"
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm shadow-md shadow-blue-500/10"
                 disabled={classrooms.length === 0}
                 title={classrooms.length === 0 ? "Join a classroom first" : "Create or join a team"}
               >
-                <Plus size={18} />
+                <Plus size={16} />
                 Join Team
               </motion.button>
             </div>
@@ -509,79 +525,116 @@ export default function StudentDashboard() {
 
           {/* Stats overview */}
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-900/30 rounded-lg">
-                  <School className="text-indigo-400" size={24} />
-                </div>
+            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Classrooms</p>
-                  <h3 className="text-2xl font-bold">{classrooms.length}</h3>
+                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Classrooms</p>
+                  <h3 className="text-xl font-medium">{classrooms.length}</h3>
                 </div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-500/10">
+                  <School className="text-blue-400" size={18} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
+                <p className="text-[#a0a0a0] text-xs">
+                  {classrooms.length > 0 ? 
+                    `${classrooms.length} active ${classrooms.length === 1 ? 'classroom' : 'classrooms'}` : 
+                    'No classrooms joined'}
+                </p>
               </div>
             </div>
             
-            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-900/30 rounded-lg">
-                  <Users className="text-purple-400" size={24} />
-                </div>
+            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Teams</p>
-                  <h3 className="text-2xl font-bold">{teams.length}</h3>
+                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Teams</p>
+                  <h3 className="text-xl font-medium">{teams.length}</h3>
                 </div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-purple-500/10">
+                  <Users className="text-purple-400" size={18} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
+                <p className="text-[#a0a0a0] text-xs">
+                  {teams.length > 0 ? 
+                    `${teams.length} active ${teams.length === 1 ? 'team' : 'teams'}` : 
+                    'No teams joined'}
+                </p>
               </div>
             </div>
             
-            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-900/30 rounded-lg">
-                  <Calendar className="text-emerald-400" size={24} />
-                </div>
+            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Upcoming Reviews</p>
-                  <h3 className="text-2xl font-bold">{upcomingReviews.length}</h3>
+                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Reviews</p>
+                  <h3 className="text-xl font-medium">{upcomingReviews.length}</h3>
                 </div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-500/10">
+                  <Calendar className="text-green-400" size={18} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
+                <p className="text-[#a0a0a0] text-xs">
+                  {upcomingReviews.length > 0 ? 
+                    `${upcomingReviews.length} upcoming ${upcomingReviews.length === 1 ? 'review' : 'reviews'}` : 
+                    'No upcoming reviews'}
+                </p>
               </div>
             </div>
             
-            <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-rose-900/30 rounded-lg">
-                  <Clock className="text-rose-400" size={24} />
-                </div>
+            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Roll Number</p>
-                  <h3 className="text-sm font-medium truncate max-w-[120px]">{user?.roll_number || 'Not set'}</h3>
+                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Student ID</p>
+                  <h3 className="text-xl font-medium truncate max-w-[120px]">{user?.roll_number || 'Not set'}</h3>
                 </div>
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-amber-500/10">
+                  <Clock className="text-amber-400" size={18} />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
+                <p className="text-[#a0a0a0] text-xs">
+                  {user?.roll_number ? 'Student ID verified' : 'ID not set'}
+                </p>
               </div>
             </div>
           </motion.div>
 
           {/* Available Review Slots */}
           <motion.div variants={itemVariants} className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Available Review Slots</h3>
-              <Link href="/student/slots" className="text-sm text-indigo-400 hover:text-indigo-300">View all</Link>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-medium">Available Review Slots</h3>
+                <p className="text-[#a0a0a0] text-xs mt-1">Book slots for your upcoming project reviews</p>
+              </div>
+              <Link 
+                href="/student/slots" 
+                className="text-xs text-[#a0a0a0] hover:text-white px-3 py-1.5 rounded-md bg-[#1e1e1e] hover:bg-[#252525] transition-colors duration-200"
+              >
+                View all
+              </Link>
             </div>
             
-            <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/20 rounded-xl p-5 border border-indigo-800/30 shadow-xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-indigo-600 p-2 rounded-lg shadow-md">
-                  <Calendar size={18} className="text-white" />
+            <div className="bg-[#141414] rounded-lg border border-[#1e1e1e] p-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-500/10">
+                  <Calendar size={16} className="text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Book Your Review Slots</h3>
-                  <p className="text-gray-400 text-sm">Select a time slot for your team's project review</p>
+                  <h3 className="font-medium text-sm">Book Your Review Slots</h3>
+                  <p className="text-[#a0a0a0] text-xs mt-0.5">Select a time slot for your team's project review</p>
                 </div>
               </div>
               
               {classrooms.length === 0 ? (
-                <div className="bg-gray-900/70 rounded-lg p-4 backdrop-blur-sm border border-gray-800 text-center">
-                  <p className="text-gray-400 mb-3">You haven't joined any classrooms yet</p>
-                  <Link href="/student/join" className="bg-indigo-600 text-white px-4 py-2 rounded-lg inline-block text-sm font-medium hover:bg-indigo-700 transition-colors">
+                <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#252525] text-center">
+                  <p className="text-[#a0a0a0] text-sm mb-3">You haven't joined any classrooms yet</p>
+                  <button 
+                    onClick={() => setShowJoinForm(true)}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-md inline-block text-xs font-medium shadow-md shadow-blue-500/10"
+                  >
                     Join a Classroom
-                  </Link>
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -589,16 +642,16 @@ export default function StudentDashboard() {
                     <Link 
                       key={classroom.id}
                       href={`/student/classroom/${classroom.id}/slots`}
-                      className="bg-gray-900/70 rounded-lg p-4 backdrop-blur-sm border border-gray-800 hover:bg-gray-800/70 transition-colors"
+                      className="bg-[#1a1a1a] rounded-lg p-4 border border-[#252525] hover:border-[#303030] transition-colors duration-200 group"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold">{classroom.name}</h4>
-                        <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full">
+                        <h4 className="font-medium text-sm">{classroom.name}</h4>
+                        <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
                           View Slots
                         </span>
                       </div>
-                      <p className="text-gray-400 text-sm mb-3">
-                        Faculty: {classroom.faculty_name}
+                      <p className="text-[#a0a0a0] text-xs mb-3">
+                        Faculty: {classroom.faculty_name || 'Unknown'}
                       </p>
                       <div className="flex items-center gap-2 text-sm">
                         <Clock size={14} className="text-indigo-400" />
@@ -633,37 +686,57 @@ export default function StudentDashboard() {
 
           {/* Classrooms */}
           <motion.div variants={itemVariants} className="mb-8">
-            <h3 className="text-xl font-bold mb-4">Your Classrooms</h3>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-medium">Your Classrooms</h3>
+                <p className="text-[#a0a0a0] text-xs mt-1">Manage your enrolled classrooms</p>
+              </div>
+              <button 
+                onClick={() => setShowJoinForm(true)}
+                className="text-xs text-[#a0a0a0] hover:text-white px-3 py-1.5 rounded-md bg-[#1e1e1e] hover:bg-[#252525] transition-colors duration-200"
+              >
+                Join New
+              </button>
+            </div>
             
             {classrooms.length === 0 ? (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-                <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                  <School size={24} className="text-gray-400" />
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-8 text-center">
+                <div className="mb-4 mx-auto w-12 h-12 bg-[#1e1e1e] rounded-full flex items-center justify-center">
+                  <School size={20} className="text-[#a0a0a0]" />
                 </div>
-                <h4 className="text-lg font-medium mb-2">No classrooms joined yet</h4>
-                <p className="text-gray-400 mb-6">Join a classroom to start creating or joining teams</p>
+                <h4 className="text-base font-medium mb-2">No classrooms joined yet</h4>
+                <p className="text-[#a0a0a0] text-sm mb-4">Join a classroom to start creating or joining teams</p>
                 <button 
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium mx-auto"
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-md inline-block text-xs font-medium shadow-md shadow-blue-500/10"
                   onClick={() => setShowJoinForm(true)}
                 >
-                  <Plus size={18} />
+                  <Plus size={16} className="inline mr-1" />
                   Join Classroom
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {classrooms.map((classroom) => (
-                  <div key={classroom.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:bg-gray-800 transition-colors" onClick={() => {
-                    setSelectedClassroom(classroom);
-                    setShowClassroomDetailsModal(true);
-                  }}>
-                    <h4 className="font-bold text-lg mb-2">{classroom.name}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{classroom.faculty_name}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs bg-gray-800 px-2 py-1 rounded-full">
+                  <div 
+                    key={classroom.id} 
+                    className="bg-[#141414] border border-[#1e1e1e] hover:border-[#252525] rounded-lg p-5 transition-colors duration-200 cursor-pointer group" 
+                    onClick={() => {
+                      setSelectedClassroom(classroom);
+                      setShowClassroomDetailsModal(true);
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-medium text-sm">{classroom.name}</h4>
+                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500/10">
+                        <School size={14} className="text-blue-400" />
+                      </div>
+                    </div>
+                    <p className="text-[#a0a0a0] text-xs mb-4">{classroom.faculty_name || 'Unknown Faculty'}</p>
+                    <div className="flex justify-between items-center pt-3 border-t border-[#1e1e1e]">
+                      <span className="text-[10px] bg-[#1e1e1e] px-2 py-0.5 rounded-full text-[#a0a0a0]">
                         {classroom.teams_count || 0} team{classroom.teams_count !== 1 ? 's' : ''}
                       </span>
-                      <span className="text-xs bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-full">
+                      <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full group-hover:bg-blue-500/20 transition-colors duration-200">
                         {classroom.students_count || 0} student{classroom.students_count !== 1 ? 's' : ''}
                       </span>
                     </div>
@@ -675,21 +748,33 @@ export default function StudentDashboard() {
 
           {/* Teams */}
           <motion.div variants={itemVariants} className="mb-8">
-            <h3 className="text-xl font-bold mb-4">Your Teams</h3>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-medium">Your Teams</h3>
+                <p className="text-[#a0a0a0] text-xs mt-1">Teams you're currently part of</p>
+              </div>
+              <button 
+                disabled={classrooms.length === 0}
+                title={classrooms.length === 0 ? "Join a classroom first" : "Create or join a team"}
+                className={`text-xs px-3 py-1.5 rounded-md transition-colors duration-200 ${classrooms.length === 0 ? 'bg-[#1a1a1a] text-[#505050] cursor-not-allowed' : 'bg-[#1e1e1e] text-[#a0a0a0] hover:text-white hover:bg-[#252525]'}`}
+              >
+                Join Team
+              </button>
+            </div>
             
             {teams.length === 0 ? (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-                <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                  <Users size={24} className="text-gray-400" />
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-8 text-center">
+                <div className="mb-4 mx-auto w-12 h-12 bg-[#1e1e1e] rounded-full flex items-center justify-center">
+                  <Users size={20} className="text-[#a0a0a0]" />
                 </div>
-                <h4 className="text-lg font-medium mb-2">No teams yet</h4>
-                <p className="text-gray-400 mb-6">Join a team or create one to start scheduling reviews</p>
+                <h4 className="text-base font-medium mb-2">No teams yet</h4>
+                <p className="text-[#a0a0a0] text-sm mb-4">Join a team or create one to start scheduling reviews</p>
                 <button 
-                  className="bg-white text-black px-4 py-2 rounded-lg flex items-center gap-2 font-medium mx-auto"
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-md inline-block text-xs font-medium shadow-md shadow-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={classrooms.length === 0}
                   title={classrooms.length === 0 ? "Join a classroom first" : "Create or join a team"}
                 >
-                  <Plus size={18} />
+                  <Plus size={16} className="inline mr-1" />
                   Join Team
                 </button>
               </div>
@@ -699,16 +784,21 @@ export default function StudentDashboard() {
                   <Link 
                     href={`/student/team/${team.id}`} 
                     key={team.id}
-                    className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:bg-gray-800 transition-colors"
+                    className="bg-[#141414] border border-[#1e1e1e] hover:border-[#252525] rounded-lg p-5 transition-colors duration-200 group"
                   >
-                    <h4 className="font-bold text-lg mb-2">{team.name}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{team.project_title}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs bg-gray-800 px-2 py-1 rounded-full">
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-medium text-sm">{team.name}</h4>
+                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500/10">
+                        <Users size={14} className="text-purple-400" />
+                      </div>
+                    </div>
+                    <p className="text-[#a0a0a0] text-xs mb-4">{team.project_title || 'No project title set'}</p>
+                    <div className="flex justify-between items-center pt-3 border-t border-[#1e1e1e]">
+                      <span className="text-[10px] bg-[#1e1e1e] px-2 py-0.5 rounded-full text-[#a0a0a0]">
                         {team.members_count || 0} member{team.members_count !== 1 ? 's' : ''}
                       </span>
-                      <span className="text-xs bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-full">
-                        {team.classroom_name}
+                      <span className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full group-hover:bg-purple-500/20 transition-colors duration-200">
+                        {team.classroom_name || 'Unknown'}
                       </span>
                     </div>
                   </Link>
@@ -720,53 +810,71 @@ export default function StudentDashboard() {
 
           
           {/* Activity Feed */}
-          <motion.div variants={itemVariants} className="mb-12">
-            <h3 className="text-xl font-bold mb-4">Activity Feed</h3>
-            <ActivityFeed userRole="student" />
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-medium">Activity Feed</h3>
+                <p className="text-[#a0a0a0] text-xs mt-1">Recent updates and notifications</p>
+              </div>
+            </div>
+            <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden">
+              <ActivityFeed userRole="student" />
+            </div>
           </motion.div>
 
           {/* Upcoming Reviews */}
           <motion.div variants={itemVariants}>
-            <h3 className="text-xl font-bold mb-4">Upcoming Reviews</h3>
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-medium">Upcoming Reviews</h3>
+                <p className="text-[#a0a0a0] text-xs mt-1">Your scheduled project review sessions</p>
+              </div>
+              <Link 
+                href="/student/bookings" 
+                className="text-xs text-[#a0a0a0] hover:text-white px-3 py-1.5 rounded-md bg-[#1e1e1e] hover:bg-[#252525] transition-colors duration-200"
+              >
+                View all
+              </Link>
+            </div>
             
             {upcomingReviews.length === 0 ? (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
-                <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                  <Calendar size={24} className="text-gray-400" />
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-8 text-center">
+                <div className="mb-4 mx-auto w-12 h-12 bg-[#1e1e1e] rounded-full flex items-center justify-center">
+                  <Calendar size={20} className="text-[#a0a0a0]" />
                 </div>
-                <h4 className="text-lg font-medium mb-2">No upcoming reviews</h4>
-                <p className="text-gray-400">Your scheduled reviews will appear here</p>
+                <h4 className="text-base font-medium mb-2">No upcoming reviews</h4>
+                <p className="text-[#a0a0a0] text-sm">Your scheduled reviews will appear here</p>
               </div>
             ) : (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-800">
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Review</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Classroom</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Team</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
+                      <tr className="border-b border-[#252525]">
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Review</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Date</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Time</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Classroom</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Team</th>
+                        <th className="px-5 py-3 text-left text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Status</th>
+                        <th className="px-5 py-3 text-right text-[10px] font-medium text-[#a0a0a0] uppercase tracking-wider">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {upcomingReviews.map((review, index) => (
-                        <tr key={review.id} className={index !== upcomingReviews.length - 1 ? "border-b border-gray-800" : ""}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{review.title}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{review.date}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{review.time}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{review.classroom}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{review.team}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 text-xs rounded-full bg-emerald-900/30 text-emerald-400">
+                        <tr key={review.id} className={index !== upcomingReviews.length - 1 ? "border-b border-[#1e1e1e]" : ""}>
+                          <td className="px-5 py-3 whitespace-nowrap text-xs font-medium">{review.title}</td>
+                          <td className="px-5 py-3 whitespace-nowrap text-xs text-[#a0a0a0]">{review.date}</td>
+                          <td className="px-5 py-3 whitespace-nowrap text-xs text-[#a0a0a0]">{review.time}</td>
+                          <td className="px-5 py-3 whitespace-nowrap text-xs text-[#a0a0a0]">{review.classroom}</td>
+                          <td className="px-5 py-3 whitespace-nowrap text-xs text-[#a0a0a0]">{review.team}</td>
+                          <td className="px-5 py-3 whitespace-nowrap">
+                            <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/10 text-green-400">
                               {review.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <Link href={`/student/bookings/${review.id}`} className="text-indigo-400 hover:text-indigo-300">
+                          <td className="px-5 py-3 whitespace-nowrap text-right text-xs">
+                            <Link href={`/student/bookings/${review.id}`} className="text-blue-400 hover:text-blue-300 transition-colors duration-200">
                               View Details
                             </Link>
                           </td>
@@ -787,6 +895,86 @@ export default function StudentDashboard() {
             classroom={selectedClassroom} 
             onClose={() => setShowClassroomDetailsModal(false)} 
           />
+        )}
+        
+        {showProfileModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowProfileModal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#141414] border border-[#1e1e1e] rounded-lg w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-[#1e1e1e]">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Profile</h3>
+                  <button 
+                    onClick={() => setShowProfileModal(false)}
+                    className="w-8 h-8 rounded-full bg-[#1e1e1e] hover:bg-[#252525] flex items-center justify-center transition-colors duration-200"
+                  >
+                    <X size={14} className="text-[#a0a0a0]" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-xl font-medium">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : '?'}
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium">{user?.name || 'Student'}</h4>
+                    <p className="text-[#a0a0a0] text-xs mt-1">{user?.email || 'No email available'}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-[#1a1a1a] rounded-lg p-4">
+                    <h5 className="text-xs font-medium mb-2">Student Information</h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] text-[#a0a0a0] mb-1">Registration Number</p>
+                        <p className="text-xs">22MIA1079</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#a0a0a0] mb-1">Joined</p>
+                        <p className="text-xs">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-[#1a1a1a] rounded-lg p-4">
+                    <h5 className="text-xs font-medium mb-2">Statistics</h5>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-[10px] text-[#a0a0a0] mb-1">Classrooms</p>
+                        <p className="text-xs">{classrooms.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#a0a0a0] mb-1">Teams</p>
+                        <p className="text-xs">{teams.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#a0a0a0] mb-1">Reviews</p>
+                        <p className="text-xs">{upcomingReviews.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-[#1e1e1e] flex justify-end">
+                  <LogoutButton variant="minimal" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
