@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Calendar, Users, FileText, Settings, Clock, Upload, Grid, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Calendar, Users, FileText, Settings, Clock, Upload, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import LogoutButton from '@/components/auth/logout-button';
 import { parseTimetableSlots, getAllFreeSlots, FreeSlot, Schedule, splitAllSlotsByDuration } from '@/utils/timetable-parser';
 import CreateClassroomForm from '@/components/faculty/create-classroom-form';
 import ClassroomDetailsModal from '@/components/faculty/classroom-details-modal';
 import SimpleDateSelector from '@/components/faculty/simple-date-selector';
 import DateBasedSlots from '@/components/faculty/date-based-slots';
+import ReviewSlotsSection from '@/components/faculty/review-slots-section';
 import ActivityFeed from '@/components/shared/activity-feed';
 import { formatDateForInput } from '@/lib/utils';
 
@@ -414,7 +415,7 @@ export default function FacultyDashboard() {
                     : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'
                 }`}
               >
-                <Grid size={16} />
+                <FileText size={16} />
                 Overview
               </button>
               <button
@@ -595,8 +596,8 @@ export default function FacultyDashboard() {
               variants={containerVariants}
             >
               <motion.div variants={itemVariants} className="mb-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Timetable Management</h2>
-                <p className="text-gray-400 max-w-2xl mx-auto">Upload and parse your VIT timetable to automatically identify free slots for scheduling reviews</p>
+                <h2 className="text-xl font-medium mb-2">Timetable Management</h2>
+                <p className="text-[#a0a0a0] text-sm max-w-2xl mx-auto">Upload and parse your VIT timetable to automatically identify free slots for scheduling reviews</p>
               </motion.div>
 
               {/* Timetable upload */}
@@ -604,10 +605,10 @@ export default function FacultyDashboard() {
               {publishSuccess && (
                 <motion.div
                   variants={itemVariants}
-                  className="bg-green-900/30 border border-green-800 rounded-xl overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
+                  className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
                 >
-                  <CheckCircle size={18} className="text-green-400" />
-                  <span className="text-green-400">{publishMessage}</span>
+                  <CheckCircle size={16} className="text-[#4ade80]" />
+                  <span className="text-[#4ade80] text-sm">{publishMessage}</span>
                 </motion.div>
               )}
               
@@ -615,89 +616,72 @@ export default function FacultyDashboard() {
               {publishError && (
                 <motion.div
                   variants={itemVariants}
-                  className="bg-red-900/30 border border-red-800 rounded-xl overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
+                  className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden max-w-3xl mx-auto mb-4 p-4 flex items-center gap-2"
                 >
-                  <AlertCircle size={18} className="text-red-400" />
-                  <span className="text-red-400">{publishMessage}</span>
+                  <AlertCircle size={16} className="text-[#f87171]" />
+                  <span className="text-[#f87171] text-sm">{publishMessage}</span>
                 </motion.div>
               )}
               
               <motion.div
                 variants={itemVariants}
-                className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden max-w-3xl mx-auto"
+                className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden max-w-3xl mx-auto"
               >
-                <div className="border-b border-gray-800 p-3 flex justify-between items-center">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
-                    <Upload size={16} className="text-indigo-400" />
+                <div className="border-b border-[#1e1e1e] p-3">
+                  <h3 className="text-base font-medium flex items-center gap-2">
+                    <Upload size={16} className="text-[#a0a0a0]" />
                     Parse Timetable
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={reviewDuration}
-                      onChange={(e) => {
-                        setReviewDuration(e.target.value);
-                        if (allFreeSlots.length > 0) {
-                          const duration = parseInt(e.target.value, 10);
-                          const splitSlots = splitAllSlotsByDuration(allFreeSlots, duration);
-                          setSplitFreeSlots(splitSlots);
-                        }
-                      }}
-                      className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white"
-                    >
-                      <option value="5">5 min</option>
-                      <option value="10">10 min</option>
-                      <option value="15">15 min</option>
-                      <option value="20">20 min</option>
-                      <option value="30">30 min</option>
-                    </select>
-                  </div>
                 </div>
                 
                 <div className="p-3">
-                  <div className="text-xs text-gray-400 mb-2">
+                  <div className="text-xs text-[#a0a0a0] mb-2">
                     Copy and paste your VIT timetable text here. The system will automatically identify your free slots.
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-3">
                     <textarea
                       value={timetableText}
                       onChange={(e) => setTimetableText(e.target.value)}
-                      className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg p-2 text-white font-mono text-xs"
+                      className="w-full h-32 bg-[#1a1a1a] border border-[#252525] rounded-lg p-3 text-white font-mono text-xs focus:border-[#5c46f5] focus:outline-none transition-colors"
                       placeholder="Paste your timetable here..."
                     />
-                    <button
-                      onClick={() => {
-                        try {
-                          setParseError('');
-                          setParseSuccess(false);
-                          
-                          // Parse the timetable
-                          const schedule = parseTimetableSlots(timetableText);
-                          setParsedSchedule(schedule);
-                          
-                          // Get all free slots
-                          const freeSlots = getAllFreeSlots(schedule);
-                          setAllFreeSlots(freeSlots);
-                          
-                          const duration = parseInt(reviewDuration, 10);
-                          const splitSlots = splitAllSlotsByDuration(freeSlots, duration);
-                          setSplitFreeSlots(splitSlots);
-                          
-                          setParseSuccess(true);
-                        } catch (error) {
-                          console.error('Error parsing timetable:', error);
-                          setParseError('Failed to parse timetable. Please check the format and try again.');
-                        }
-                      }}
-                      className="bg-indigo-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 hover:bg-indigo-700 transition-colors h-24 whitespace-nowrap"
-                    >
-                      <Upload size={16} />
-                      Parse
-                    </button>
+                    
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => {
+                          try {
+                            setParseError('');
+                            setParseSuccess(false);
+                            
+                            // Parse the timetable
+                            const schedule = parseTimetableSlots(timetableText);
+                            setParsedSchedule(schedule);
+                            
+                            // Get all free slots
+                            const freeSlots = getAllFreeSlots(schedule);
+                            setAllFreeSlots(freeSlots);
+                            
+                            const duration = parseInt(reviewDuration, 10);
+                            const splitSlots = splitAllSlotsByDuration(freeSlots, duration);
+                            setSplitFreeSlots(splitSlots);
+                            
+                            setParseSuccess(true);
+                          } catch (error) {
+                            console.error('Error parsing timetable:', error);
+                            setParseError('Failed to parse timetable. Please check the format and try again.');
+                          }
+                        }}
+                        className="bg-[#5c46f5] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#4c38e6] transition-colors text-sm"
+                      >
+                        <Upload size={16} />
+                        Parse
+                      </button>
+                    </div>
                   </div>
 
                   {parseError && (
-                    <div className="mt-2 flex items-center gap-2 text-red-400 bg-red-900/20 p-2 rounded-lg text-xs">
+                    <div className="mt-2 flex items-center gap-2 text-[#f87171] bg-[#1a1a1a] p-2 rounded-lg text-xs">
                       <AlertCircle size={14} />
                       <span>{parseError}</span>
                     </div>
@@ -767,8 +751,8 @@ export default function FacultyDashboard() {
                         disabled={!(allFreeSlots.length > 0 && selectedClassroomId && bookingDeadline)}
                         className={`w-full py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 ${
                           allFreeSlots.length > 0 && selectedClassroomId && bookingDeadline
-                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            : 'bg-gray-800 text-gray-400 cursor-not-allowed'
+                            ? 'bg-[#5c46f5] hover:bg-[#4c38e6] text-white transition-colors'
+                            : 'bg-[#1a1a1a] text-[#505050] cursor-not-allowed'
                         }`}
                       >
                         <Calendar size={16} />
@@ -888,153 +872,7 @@ export default function FacultyDashboard() {
             </motion.div>
           )}
           {activeTab === 'slots' && (
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={containerVariants}
-            >
-              <motion.div variants={itemVariants} className="mb-6">
-                <h2 className="text-2xl font-bold mb-2">Review Slots</h2>
-                <p className="text-gray-400">Manage and monitor your published review slots</p>
-              </motion.div>
-
-              {/* Review Slots List */}
-              <motion.div variants={itemVariants} className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold">Published Slots</h3>
-                  <div className="flex gap-2">
-                    <select className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white">
-                      <option value="all">All Classrooms</option>
-                      {classrooms.map((classroom) => (
-                        <option key={classroom.id} value={classroom.id}>
-                          {classroom.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white">
-                      <option value="all">All Stages</option>
-                      <option value="Review 1">Review 1</option>
-                      <option value="Review 2">Review 2</option>
-                      <option value="Review 3">Review 3</option>
-                      <option value="Final Review">Final Review</option>
-                    </select>
-                  </div>
-                </div>
-
-                <motion.div variants={itemVariants} className="bg-gray-900 border border-gray-800 rounded-xl p-6 overflow-hidden">
-                  {slotsLoading ? (
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                    </div>
-                  ) : reviewSlots.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                        <Calendar size={24} className="text-gray-400" />
-                      </div>
-                      <h4 className="text-lg font-medium mb-2">No review slots found</h4>
-                      <p className="text-gray-400 mb-6">Create review slots by parsing your timetable</p>
-                      <button 
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 font-medium"
-                        onClick={() => setActiveTab('timetable')}
-                      >
-                        <Clock size={18} />
-                        Parse Timetable
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-800">
-                        <thead>
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time Slot</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Duration</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Classroom</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Review Stage</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Bookings</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-800">
-                          {reviewSlots.map((slot) => (
-                            <tr key={slot.id} className="bg-gray-900 hover:bg-gray-800">
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">
-                                {getDayFullName(slot.day)}, {slot.time}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                {slot.duration} mins
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                {slot.classroom}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                {slot.review_stage}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                {slot.bookings_count}/{slot.is_available ? 'Open' : 'Closed'}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                <span className={`px-2 py-1 text-xs rounded-full ${
-                                  slot.status === 'Available' ? 'bg-emerald-900/30 text-emerald-400' :
-                                  slot.status === 'Booked' ? 'bg-amber-900/30 text-amber-400' :
-                                  'bg-red-900/30 text-red-400'
-                                }`}>
-                                  {slot.status}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                <button className="text-indigo-400 hover:text-indigo-300 mr-2">
-                                  Edit
-                                </button>
-                                <button className="text-red-400 hover:text-red-300">
-                                  Cancel
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </motion.div>
-              </motion.div>
-
-              {/* Calendar View */}
-              <motion.div variants={itemVariants} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4">Calendar View</h3>
-                <p className="text-gray-400 text-sm mb-6">
-                  Green slots are available, yellow are partially booked, and red are fully booked
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                  {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
-                    <div key={day} className="bg-gray-800 rounded-lg p-3">
-                      <h4 className="text-center font-medium mb-3 pb-2 border-b border-gray-700">{day}</h4>
-                      <div className="space-y-2">
-                        {Array.from({ length: 8 }).map((_, timeIndex) => {
-                          const hour = 9 + timeIndex;
-                          const status = Math.random() > 0.7 ? 'booked' : Math.random() > 0.5 ? 'partial' : 'available';
-
-                          return (
-                            <div
-                              key={`${day}-${timeIndex}`}
-                              className={`p-2 rounded-md text-xs ${
-                                status === 'available'
-                                  ? 'bg-green-900/20 border border-green-800/30 text-green-400'
-                                  : status === 'partial'
-                                  ? 'bg-yellow-900/20 border border-yellow-800/30 text-yellow-400'
-                                  : 'bg-red-900/20 border border-red-800/30 text-red-400'
-                              }`}
-                            >
-                              {hour}:00 - {hour}:30
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
+            <ReviewSlotsSection userId={user?.id} />
           )}
 
           {activeTab === 'submissions' && (

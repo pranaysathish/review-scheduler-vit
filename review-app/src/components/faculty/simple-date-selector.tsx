@@ -52,33 +52,33 @@ export default function SimpleDateSelector({
   };
   
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-lg p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold">Select Dates for Review Slots</h3>
+        <h3 className="text-lg font-medium">Select Dates for Review Slots</h3>
         <button
           onClick={onCancel}
-          className="text-gray-400 hover:text-white"
+          className="text-[#a0a0a0] hover:text-white transition-colors"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
       
       <div className="mb-4">
-        <p className="text-gray-400 text-sm mb-2">
+        <p className="text-[#a0a0a0] text-sm mb-4">
           Select the specific dates when you want to publish review slots and choose your preferred slot duration.
         </p>
         
         {/* Slot Duration Selector */}
-        <div className="mt-4 bg-gray-800 border border-gray-700 rounded-lg p-3">
-          <label className="text-sm font-medium text-gray-300 mb-2 block">Slot Duration (minutes)</label>
+        <div className="mt-4 bg-[#141414] border border-[#1e1e1e] rounded-lg p-4">
+          <label className="text-sm font-medium text-[#a0a0a0] mb-3 block">Slot Duration (minutes)</label>
           <div className="flex gap-2">
             {[5, 10, 15, 20, 30].map(duration => (
               <button
                 key={duration}
                 onClick={() => setSlotDuration(duration)}
                 className={`px-3 py-2 rounded-lg text-sm ${slotDuration === duration 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                  ? 'bg-[#5c46f5] text-white' 
+                  : 'bg-[#1a1a1a] text-[#a0a0a0] hover:bg-[#252525] transition-colors'}`}
               >
                 {duration}
               </button>
@@ -90,15 +90,15 @@ export default function SimpleDateSelector({
       <div className="grid grid-cols-1 gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="text-sm font-medium text-gray-400 mb-2">Select Dates</h4>
-            <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden p-4">
+            <h4 className="text-sm font-medium text-[#a0a0a0] mb-2">Select Dates</h4>
+            <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg overflow-hidden p-4">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-4">
                 <button 
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-1 rounded-full hover:bg-gray-700"
+                  className="p-1 rounded-full hover:bg-[#252525] transition-colors"
                 >
-                  <ChevronLeft size={20} className="text-gray-400" />
+                  <ChevronLeft size={18} className="text-[#a0a0a0]" />
                 </button>
                 
                 <h3 className="text-white font-medium">
@@ -107,16 +107,16 @@ export default function SimpleDateSelector({
                 
                 <button 
                   onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-1 rounded-full hover:bg-gray-700"
+                  className="p-1 rounded-full hover:bg-[#252525] transition-colors"
                 >
-                  <ChevronRight size={20} className="text-gray-400" />
+                  <ChevronRight size={18} className="text-[#a0a0a0]" />
                 </button>
               </div>
               
               {/* Calendar Days Header */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, index) => (
-                  <div key={index} className="text-center text-xs text-gray-400 py-1">
+                  <div key={index} className="text-center text-xs text-[#a0a0a0] py-1">
                     {day}
                   </div>
                 ))}
@@ -155,18 +155,18 @@ export default function SimpleDateSelector({
                     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
                     const isToday = date.toDateString() === today.toDateString();
                     const isSelected = isDateSelected(date);
-                    const isPast = date < new Date(today.setHours(0, 0, 0, 0));
                     
                     days.push(
                       <button
                         key={`current-${i}`}
-                        disabled={isPast}
                         onClick={() => handleDateSelect(date)}
+                        disabled={date < today}
                         className={`
-                          relative w-full h-10 rounded-full flex items-center justify-center text-sm
-                          ${isPast ? 'text-gray-600 cursor-not-allowed' : 'hover:bg-gray-700'}
-                          ${isToday ? 'text-indigo-400 font-medium' : ''}
-                          ${isSelected ? 'bg-indigo-500 text-white hover:bg-indigo-600' : ''}
+                          w-full text-center py-2 rounded-lg transition-colors
+                          ${isSelected ? 'bg-[#5c46f5] text-white' : ''}
+                          ${isToday && !isSelected ? 'border border-[#5c46f5] text-[#a0a0a0]' : ''}
+                          ${!isSelected && !isToday ? 'hover:bg-[#252525] text-white' : ''}
+                          ${date < today ? 'opacity-30 cursor-not-allowed text-[#505050]' : 'cursor-pointer'}
                         `}
                       >
                         {i}
@@ -191,11 +191,10 @@ export default function SimpleDateSelector({
           </div>
           
           <div>
-            <h4 className="text-sm font-medium text-gray-400 mb-2">Selected Dates</h4>
+            <h4 className="text-sm font-medium text-[#a0a0a0] mb-2">Selected Dates</h4>
             {selectedDates.length === 0 ? (
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
-                <p className="text-gray-400">No dates selected yet</p>
-                <p className="text-xs text-gray-500 mt-1">Select dates from the calendar</p>
+              <div className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-4 text-center">
+                <p className="text-[#505050] text-sm">No dates selected yet</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
@@ -204,23 +203,23 @@ export default function SimpleDateSelector({
                   .map((date, index) => (
                     <div 
                       key={index}
-                      className="bg-indigo-900/30 border border-indigo-800 rounded-lg p-3 flex justify-between items-center"
+                      className="bg-[#1a1a1a] border border-[#252525] rounded-lg p-3 flex justify-between items-center"
                     >
                       <div>
-                        <div className="text-indigo-300 font-medium">
+                        <div className="text-white font-medium">
                           {date.toLocaleDateString('en-US', {
                             weekday: 'long',
                             month: 'short',
                             day: 'numeric'
                           })}
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-xs text-[#a0a0a0] mt-1">
                           Day: {getDayStringFromDate(date)}
                         </div>
                       </div>
                       <button
                         onClick={() => handleDateSelect(date)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-[#f87171] hover:text-[#ef4444] transition-colors"
                       >
                         <X size={16} />
                       </button>
@@ -231,10 +230,10 @@ export default function SimpleDateSelector({
           </div>
         </div>
         
-        <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between">
+        <div className="mt-4 pt-4 border-t border-[#1e1e1e] flex justify-between">
           <button
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
+            className="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg text-sm hover:bg-[#252525] transition-colors"
           >
             Cancel
           </button>
@@ -244,8 +243,8 @@ export default function SimpleDateSelector({
             disabled={selectedDates.length === 0}
             className={`px-4 py-2 rounded-lg text-sm font-medium ${
               selectedDates.length === 0
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                ? 'bg-[#1a1a1a] text-[#505050] cursor-not-allowed'
+                : 'bg-[#5c46f5] text-white hover:bg-[#4c38e6] transition-colors'
             }`}
           >
             Continue with {selectedDates.length} {selectedDates.length === 1 ? 'date' : 'dates'}
