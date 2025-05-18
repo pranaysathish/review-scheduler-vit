@@ -91,7 +91,6 @@ export default function ReviewSlotsSection({ userId }: ReviewSlotsSectionProps) 
       setError(null); // Clear any previous errors
       
       // Get all slots without filtering
-      // Since we're physically deleting cancelled slots, we don't need to filter by is_available
       const { data, error } = await supabase
         .from('slots')
         .select(`
@@ -222,57 +221,51 @@ export default function ReviewSlotsSection({ userId }: ReviewSlotsSectionProps) 
     setShowCancelConfirm(true);
   };
   
-  // Cancel a review slot by physically deleting it from the database
+  // Cancel a review slot
   const cancelReviewSlot = async (slotId: string) => {
     try {
       setCancellingSlot(slotId);
       setShowCancelConfirm(false);
       
-      console.log('Attempting to cancel slot with ID:', slotId);
-      
       // Check if the slot is booked
       const slot = reviewSlots.find(s => s.id === slotId);
-      if (!slot) {
-        throw new Error(`Slot with ID ${slotId} not found in local state`);
-      }
-      
-      console.log('Found slot to cancel:', slot);
-      
-      // If the slot is booked, send notification to the student
-      if (slot.status === 'Booked') {
-        // Send notification to student (in a real app, this would be an email service)
+      if (slot?.status === 'Booked') {
+        // Delete the booking first
+        const { error: bookingError } = await supabase
+          .from('bookings')
+          .delete()
+          .eq('slot_id', slotId);
+          
+        if (bookingError) {
+          throw bookingError;
+        }
+        
+        // Send notification to student (in a real app, this would be an API call or email service)
         console.log(`Notification sent to student: Your booking for ${slot.date} at ${slot.start_time} has been cancelled.`);
+        
+        // In a real implementation, you would use an email service or notification system
+        // For example:
+        // await sendEmail({
+        //   to: studentEmail,
+        //   subject: 'Review Slot Cancelled',
+        //   body: `Your booking for ${slot.date} at ${slot.start_time} has been cancelled.`
+        // });
       }
       
-      console.log('Using server-side API to physically delete the slot...');
-      
-      // Call our API endpoint to delete the slot with admin privileges
-      const response = await fetch('/api/slots/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ slotId }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error from delete API:', errorData);
-        throw new Error(`API error: ${errorData.error || response.statusText}`);
+      // Delete the review slot
+      const { error } = await supabase
+        .from('slots')
+        .delete()
+        .eq('id', slotId);
+        
+      if (error) {
+        throw error;
       }
       
-      const result = await response.json();
-      console.log('API response:', result);
-      
-      // Update the UI immediately
+      // Update the UI
       setReviewSlots(reviewSlots.filter(s => s.id !== slotId));
       setFilteredSlots(filteredSlots.filter(s => s.id !== slotId));
-      setSuccess('Review slot deleted successfully');
-      
-      // Refresh data from database after a short delay to ensure consistency
-      setTimeout(() => {
-        fetchReviewSlots();
-      }, 1000);
+      setSuccess('Review slot cancelled successfully');
       
       // Clear success message after 3 seconds
       setTimeout(() => {
