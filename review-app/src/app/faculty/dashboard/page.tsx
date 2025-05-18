@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Calendar, Users, FileText, Settings, Clock, Upload, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Calendar, Users, FileText, Settings, Clock, Upload, BookOpen, AlertCircle, CheckCircle, ChevronDown, Link } from 'lucide-react';
 import LogoutButton from '@/components/auth/logout-button';
 import { parseTimetableSlots, getAllFreeSlots, FreeSlot, Schedule, splitAllSlotsByDuration } from '@/utils/timetable-parser';
 import CreateClassroomForm from '@/components/faculty/create-classroom-form';
@@ -21,6 +21,7 @@ export default function FacultyDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [reviewSlots, setReviewSlots] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<any[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const supabase = createClientComponentClient();
@@ -309,7 +310,9 @@ export default function FacultyDashboard() {
         }
         
         const { data } = await response.json();
-        setSubmissions(data || []);
+        const submissionsData = data || [];
+      setSubmissions(submissionsData);
+      setFilteredSubmissions(submissionsData);
       } catch (error) {
         // If API doesn't exist or network error, just set empty array
         setSubmissions([]);
@@ -887,75 +890,124 @@ export default function FacultyDashboard() {
               </motion.div>
 
               {/* Submissions List */}
-              <motion.div variants={itemVariants} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <motion.div variants={itemVariants} className="bg-[#141414] border border-[#1e1e1e] rounded-xl p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold">Recent Submissions</h3>
                   <div className="flex gap-2">
-                    <select className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white">
-                      <option value="all">All Classrooms</option>
-                      {classrooms.map((classroom) => (
-                        <option key={classroom.id} value={classroom.id}>
-                          {classroom.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white">
-                      <option value="all">All Statuses</option>
-                      <option value="pending">Pending</option>
-                      <option value="reviewed">Reviewed</option>
-                      <option value="graded">Graded</option>
-                    </select>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg pl-3 pr-8 py-2 text-sm text-white focus:border-[#5c46f5] focus:outline-none transition-colors appearance-none"
+                        onChange={(e) => {
+                          // Filter submissions by classroom
+                          const classroomId = e.target.value;
+                          if (classroomId === 'all') {
+                            setFilteredSubmissions(submissions);
+                          } else {
+                            setFilteredSubmissions(submissions.filter(s => s.classroom_id === classroomId));
+                          }
+                        }}
+                      >
+                        <option value="all">All Classrooms</option>
+                        {classrooms.map((classroom) => (
+                          <option key={classroom.id} value={classroom.id}>
+                            {classroom.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <ChevronDown size={16} className="text-[#a0a0a0]" />
+                      </div>
+                    </div>
+                    
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg pl-3 pr-8 py-2 text-sm text-white focus:border-[#5c46f5] focus:outline-none transition-colors appearance-none"
+                        onChange={(e) => {
+                          // Filter submissions by status
+                          const status = e.target.value;
+                          if (status === 'all') {
+                            setFilteredSubmissions(submissions);
+                          } else {
+                            setFilteredSubmissions(submissions.filter(s => 
+                              s.status.toLowerCase() === status.toLowerCase()
+                            ));
+                          }
+                        }}
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="reviewed">Reviewed</option>
+                        <option value="graded">Graded</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <ChevronDown size={16} className="text-[#a0a0a0]" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {submissionsLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                  <div className="p-8 text-center">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#5c46f5] border-t-transparent"></div>
+                    <p className="mt-2 text-[#a0a0a0] text-sm">Loading submissions...</p>
                   </div>
                 ) : submissions.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="mb-4 mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
-                      <FileText size={24} className="text-gray-400" />
+                    <div className="mb-4 mx-auto w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center">
+                      <FileText size={24} className="text-[#a0a0a0]" />
                     </div>
                     <h4 className="text-lg font-medium mb-2">No submissions yet</h4>
-                    <p className="text-gray-400">Student submissions will appear here</p>
+                    <p className="text-[#a0a0a0]">Student submissions will appear here</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {submissions.map((submission) => (
-                      <div key={submission.id} className="bg-gray-800 rounded-lg p-4">
+                    {filteredSubmissions.map((submission) => (
+                      <div key={submission.id} className="bg-[#1a1a1a] rounded-lg p-4 hover:bg-[#1e1e1e] transition-colors">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h4 className="font-medium">{submission.title}</h4>
-                            <p className="text-gray-400 text-sm">Team {submission.team_name} - {submission.project_title}</p>
+                            <h4 className="font-medium text-white">{submission.title}</h4>
+                            <p className="text-[#a0a0a0] text-sm">Team {submission.team_name} - {submission.project_title}</p>
                           </div>
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            submission.status === 'Pending' ? 'bg-amber-900/30 text-amber-400' :
-                            submission.status === 'Reviewed' ? 'bg-emerald-900/30 text-emerald-400' :
-                            submission.status === 'Graded' ? 'bg-indigo-900/30 text-indigo-400' :
-                            'bg-gray-700 text-gray-300'
+                            submission.status === 'Pending' ? 'bg-[#3a2e0b] text-[#fbbf24]' :
+                            submission.status === 'Reviewed' ? 'bg-[#0f2922] text-[#34d399]' :
+                            submission.status === 'Graded' ? 'bg-[#1e1a4f] text-[#818cf8]' :
+                            'bg-[#1e1e1e] text-[#a0a0a0]'
                           }`}>
                             {submission.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-300 mb-3 line-clamp-2">
+                        <p className="text-sm text-[#e0e0e0] mb-3 line-clamp-2">
                           {submission.description || 'No description provided'}
                         </p>
-                        <div className="flex justify-between items-center text-xs text-gray-400">
+                        <div className="flex justify-between items-center text-xs text-[#a0a0a0]">
                           <span>Submitted on {submission.formatted_date}</span>
-                          <div className="flex gap-2">
+                          <div className="flex gap-3">
                             {submission.file_url && (
                               <a 
                                 href={submission.file_url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-indigo-400 hover:text-indigo-300"
+                                className="text-[#5c46f5] hover:text-[#6e5af7] transition-colors flex items-center gap-1"
                               >
+                                <Link size={12} />
                                 View File
                               </a>
                             )}
-                            <button className="text-green-400 hover:text-green-300">
-                              {submission.status === 'Pending' ? 'Mark as Reviewed' : 'Update Status'}
+                            <button 
+                              className="text-[#34d399] hover:text-[#4ade80] transition-colors flex items-center gap-1"
+                              onClick={() => {
+                                // Handle status update
+                                const newStatus = submission.status === 'Pending' ? 'Reviewed' : 
+                                                 submission.status === 'Reviewed' ? 'Graded' : 'Pending';
+                                
+                                // Show a modal or implement the API call to update the status
+                                alert(`Status would be updated to: ${newStatus}`);
+                              }}
+                            >
+                              <CheckCircle size={12} />
+                              {submission.status === 'Pending' ? 'Mark as Reviewed' : 
+                               submission.status === 'Reviewed' ? 'Mark as Graded' : 'Update Status'}
                             </button>
                           </div>
                         </div>

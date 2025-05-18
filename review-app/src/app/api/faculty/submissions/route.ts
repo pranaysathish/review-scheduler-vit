@@ -86,19 +86,25 @@ export async function GET(request: Request) {
     }
 
     // Format submissions data
-    const formattedSubmissions = submissions.map(submission => ({
-      id: submission.id,
-      title: submission.title,
-      description: submission.description,
-      file_url: submission.file_url,
-      created_at: submission.created_at,
-      formatted_date: new Date(submission.created_at).toLocaleDateString(),
-      team_name: submission.team?.name || 'Unknown',
-      project_title: submission.team?.project_title || 'Unknown',
-      classroom_id: submission.team?.classroom?.id,
-      classroom_name: submission.team?.classroom?.name || 'Unknown',
-      status: submission.status || 'Pending'
-    }));
+    const formattedSubmissions = submissions.map((submission: any) => {
+      // Safely access nested properties
+      const team = submission.team || {};
+      const classroom = team.classroom || {};
+      
+      return {
+        id: submission.id,
+        title: submission.title,
+        description: submission.description,
+        file_url: submission.file_url,
+        created_at: submission.created_at,
+        formatted_date: new Date(submission.created_at).toLocaleDateString(),
+        team_name: team.name || 'Unknown',
+        project_title: team.project_title || 'Unknown',
+        classroom_id: classroom.id || null,
+        classroom_name: classroom.name || 'Unknown',
+        status: submission.status || 'Pending'
+      };
+    });
 
     return NextResponse.json({ data: formattedSubmissions });
   } catch (error) {

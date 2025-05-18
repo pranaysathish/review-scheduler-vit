@@ -7,7 +7,8 @@ import { Calendar, Clock, Filter, Search, Edit, X, AlertCircle, CheckCircle, Che
 
 interface ReviewSlot {
   id: string;
-  date: string;
+  date: string;  // Formatted date (DD-MM-YYYY)
+  day: string;   // Day of week (MON, TUE, etc.)
   start_time: string;
   end_time: string;
   duration: number;
@@ -95,7 +96,15 @@ export default function ReviewSlotsSection({ userId }: ReviewSlotsSectionProps) 
       const { data, error } = await supabase
         .from('slots')
         .select(`
-          *,
+          id,
+          classroom_id,
+          day,
+          start_time,
+          end_time,
+          duration,
+          review_stage,
+          is_available,
+          slot_date,
           classrooms(name),
           bookings(id)
         `);
@@ -118,9 +127,25 @@ export default function ReviewSlotsSection({ userId }: ReviewSlotsSectionProps) 
         // Debug the raw slot data
         console.log('Raw slot data:', slot);
         
+        // Format the date properly if slot_date exists
+        let formattedDate = 'Unknown Date';
+        if (slot.slot_date) {
+          // Format the date as DD-MM-YYYY
+          const dateObj = new Date(slot.slot_date);
+          formattedDate = dateObj.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        } else if (slot.day) {
+          // Fallback to day if slot_date doesn't exist
+          formattedDate = slot.day;
+        }
+        
         return {
           id: slot.id,
-          date: slot.day || 'Unknown Date',
+          date: formattedDate,
+          day: slot.day || '',  // Keep the day for filtering
           start_time: slot.start_time,
           end_time: slot.end_time,
           duration: slot.duration,
@@ -467,7 +492,8 @@ export default function ReviewSlotsSection({ userId }: ReviewSlotsSectionProps) 
                   <div className="pl-1">
                     <div className="flex flex-col">
                       <span className="font-medium text-white">{slot.date}</span>
-                      <span className="text-[#a0a0a0] text-xs mt-1">{slot.start_time} - {slot.end_time}</span>
+                      <span className="text-[#a0a0a0] text-xs mt-1">{slot.day}</span>
+                      <span className="text-white text-xs font-medium mt-1">{slot.start_time} - {slot.end_time}</span>
                     </div>
                   </div>
                   
