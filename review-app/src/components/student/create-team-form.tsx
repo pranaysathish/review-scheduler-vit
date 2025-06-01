@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Check, X, Loader2 } from 'lucide-react';
+import { CheckCircle, X, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 interface CreateTeamFormProps {
@@ -133,14 +133,14 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="bg-gray-900 border border-gray-800 rounded-xl p-6"
+      className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-6"
     >
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold">Create New Team</h3>
+        <h3 className="text-xl font-medium">Create New Team</h3>
         {onCancel && (
           <button 
             onClick={onCancel}
-            className="text-gray-400 hover:text-white"
+            className="text-[#a0a0a0] hover:text-white transition-colors duration-200"
           >
             <X size={20} />
           </button>
@@ -149,19 +149,19 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
 
       {success ? (
         <div className="flex flex-col items-center justify-center py-6">
-          <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-            <Check className="h-8 w-8 text-green-400" />
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
           <h4 className="text-lg font-medium mb-2">Team created successfully!</h4>
-          <p className="text-gray-400 text-center mb-6">Your team has been created and you've been added as the team leader</p>
+          <p className="text-[#a0a0a0] text-center mb-6">Your team has been created and you've been added as the team leader</p>
           
           {invitationCode && (
-            <div className="w-full bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-400 mb-2">Share this code with your teammates:</p>
+            <div className="w-full bg-[#1a1a1a] border border-[#252525] rounded-lg p-4 mb-6">
+              <p className="text-sm text-[#a0a0a0] mb-2">Share this code with your teammates:</p>
               <div className="flex items-center justify-between">
-                <p className="text-xl font-mono font-bold tracking-wider text-indigo-400">{invitationCode}</p>
+                <p className="text-xl font-mono font-bold tracking-wider text-blue-400">{invitationCode}</p>
                 <button 
-                  className="text-indigo-400 hover:text-indigo-300 text-sm"
+                  className="text-blue-400 hover:text-blue-300 text-sm transition-colors duration-200"
                   onClick={() => {
                     navigator.clipboard.writeText(invitationCode);
                     alert('Invitation code copied to clipboard!');
@@ -177,7 +177,7 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
             onClick={() => {
               if (onSuccess && teamId) onSuccess(teamId);
             }}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200"
           >
             View Team
           </button>
@@ -186,13 +186,13 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium mb-1">
                 Team Name *
               </label>
               <input
                 id="name"
                 type="text"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full bg-[#1a1a1a] border border-[#252525] rounded-md px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter a name for your team"
                 disabled={isSubmitting}
                 {...register('name', { 
@@ -209,13 +209,13 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
             </div>
 
             <div>
-              <label htmlFor="projectTitle" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="projectTitle" className="block text-sm font-medium mb-1">
                 Project Title
               </label>
               <input
                 id="projectTitle"
                 type="text"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full bg-[#1a1a1a] border border-[#252525] rounded-md px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your project title (optional)"
                 disabled={isSubmitting}
                 {...register('projectTitle', { 
@@ -231,72 +231,73 @@ export default function CreateTeamForm({ classroomId, onSuccess, onCancel }: Cre
             </div>
 
             <div>
-              <label htmlFor="maxMembers" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="maxMembers" className="block text-sm font-medium mb-1">
                 Maximum Team Members
               </label>
-              <select
-                id="maxMembers"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={isSubmitting}
-                {...register('maxMembers', { 
-                  required: 'Maximum members is required',
-                  min: {
-                    value: 1,
-                    message: 'Team must have at least 1 member'
-                  },
-                  max: {
-                    value: 4,
-                    message: 'Team cannot have more than 4 members'
-                  }
-                })}
-              >
-                <option value="1">1 member</option>
-                <option value="2">2 members</option>
-                <option value="3">3 members</option>
-                <option value="4">4 members</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="maxMembers"
+                  className="w-full bg-[#1a1a1a] border border-[#252525] rounded-md px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                  disabled={isSubmitting}
+                  {...register('maxMembers', { 
+                    required: 'Maximum members is required',
+                    min: {
+                      value: 1,
+                      message: 'Team must have at least 1 member'
+                    },
+                    max: {
+                      value: 4,
+                      message: 'Team cannot have more than 4 members'
+                    }
+                  })}
+                >
+                  <option value="1">1 member</option>
+                  <option value="2">2 members</option>
+                  <option value="3">3 members</option>
+                  <option value="4">4 members</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#a0a0a0]">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
               {errors.maxMembers && (
                 <p className="mt-2 text-red-400 text-sm">{errors.maxMembers.message}</p>
               )}
             </div>
 
             {error && (
-              <div className="p-3 bg-red-900/30 border border-red-800 rounded-lg flex items-start gap-3">
-                <X className="text-red-400 h-5 w-5 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-red-400 font-medium">Error creating team</p>
-                  <p className="text-red-300/80 text-sm">{error}</p>
-                </div>
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2 rounded-md text-sm">
+                {error}
               </div>
             )}
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end space-x-3">
               {onCancel && (
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="mr-4 px-4 py-2 text-gray-300 hover:text-white"
+                  className="px-4 py-2 border border-[#252525] rounded-md text-[#a0a0a0] hover:bg-[#1a1a1a] transition-colors duration-200"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
               )}
-              <motion.button
+              <button
                 type="submit"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center min-w-[100px]"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
+                    <RefreshCw size={16} className="animate-spin mr-2" />
                     Creating...
                   </>
                 ) : (
                   'Create Team'
                 )}
-              </motion.button>
+              </button>
             </div>
           </div>
         </form>

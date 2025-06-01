@@ -6,8 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import './custom-scrollbar.css';
-import './onboarding.css';
-import { Plus, Calendar, Users, FileText, Clock, X, ChevronRight } from 'lucide-react';
+import { Plus, Calendar, Users, FileText, Clock, X, ChevronRight, BookOpen, User } from 'lucide-react';
 import Link from 'next/link';
 import LogoutButton from '@/components/auth/logout-button';
 import JoinClassroomForm from '@/components/student/join-classroom-form';
@@ -16,8 +15,6 @@ import JoinTeamForm from '@/components/student/join-team-form';
 import ClassroomCard from '@/components/student/classroom-card';
 import ClassroomDetailsModal from '@/components/shared/classroom-details-modal';
 import ActivityFeed from '@/components/shared/activity-feed';
-import OnboardingController from '@/components/onboarding/onboarding-controller';
-import { useOnboarding } from '@/components/onboarding/onboarding-context';
 
 interface Classroom {
   id: number;
@@ -45,18 +42,9 @@ export default function StudentDashboard() {
   const [showCreateTeamFormWithClassroom, setShowCreateTeamFormWithClassroom] = useState(false);
   const [showJoinTeamFormWithClassroom, setShowJoinTeamFormWithClassroom] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
   const supabase = createClientComponentClient();
-  
-  // Get onboarding context
-  const { 
-    hasJoinedClassroom, 
-    hasJoinedTeam, 
-    isOnboardingComplete,
-    markClassroomJoined,
-    markTeamJoined
-  } = useOnboarding();
 
   // Function to fetch available slots for the student
   const fetchAvailableSlots = async () => {
@@ -337,45 +325,89 @@ export default function StudentDashboard() {
               });
             } catch (error) {
               console.error('Error processing team:', error);
+              // Add the team with a default count of at least 1 (since the user is a member)
+              formattedTeams.push({
+                id: teamItem.team.id,
+                name: teamItem.team.name,
+                project_title: teamItem.team.project_title,
+                classroom_id: teamItem.team.classroom_id,
+                classroom_name: teamItem.team.classroom?.name,
+                role: teamItem.role,
+                members_count: 1 // At least the current user is a member
+              });
             }
           }
         }
-        
-        setTeams(formattedTeams);
-        
-        // Get upcoming reviews
-        const { data: reviews, error: reviewsError } = await supabase
+      }
+
+      setTeams(formattedTeams);
+
+      // Get the user's teams
+      const { data: userTeams, error: userTeamsError } = await supabase
+        .from('team_members')
+        .select(`
+          team:team_id(
+            id,
+            name,
+            classroom_id
+          )
+        `)
+        .eq('student_id', userData.id);
+
+      if (userTeamsError) {
+        console.error('Error fetching user teams:', userTeamsError);
+      }
+
+      // Get team IDs
+      const teamIds = userTeams?.map(item => item.team.id) || [];
+
+      // Fetch booked slots (upcoming reviews)
+      if (teamIds.length > 0) {
+        const { data: bookings, error: bookingsError } = await supabase
           .from('bookings')
           .select(`
             id,
-            team_id,
             slot:slot_id(
               id,
-              date,
-              time_start,
-              time_end,
-              faculty_id,
-              faculty:faculty_id(name),
-              review_stage
-            )
+              day,
+              start_time,
+              end_time,
+              review_stage,
+              classroom:classroom_id(name)
+            ),
+            team:team_id(name, project_title),
+            is_confirmed,
+            created_at
           `)
           .in('team_id', teamIds)
-          .order('slot.date', { ascending: true });
-        
-        if (reviewsError) {
-          console.error('Error fetching reviews:', reviewsError);
+          .eq('is_confirmed', true)
+          .order('created_at', { ascending: false });
+
+        if (bookingsError) {
+          console.error('Error fetching bookings:', bookingsError);
+        } else {
+          // Format upcoming reviews
+          const formattedReviews = bookings?.map(booking => {
+            const slot = booking.slot;
+            const today = new Date();
+            const reviewDate = getDayDate(slot.day);
+            const isPast = reviewDate < today;
+
+            return {
+              id: booking.id,
+              title: slot.review_stage,
+              date: reviewDate.toLocaleDateString(),
+              time: `${slot.start_time} - ${slot.end_time}`,
+              status: isPast ? 'Completed' : 'Scheduled',
+              classroom: slot.classroom.name,
+              team: booking.team.name
+            };
+          }).filter(review => review.status !== 'Completed') || [];
+
+          setUpcomingReviews(formattedReviews);
         }
-        
-        setUpcomingReviews(reviews || []);
-        
-        // Update onboarding status based on data
-        if (classrooms.length > 0 && !hasJoinedClassroom) {
-          markClassroomJoined();
-        }
-        
-        if (formattedTeams.length > 0 && !hasJoinedTeam) {
-          markTeamJoined();
-        }
+      } else {
+        setUpcomingReviews([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -408,12 +440,32 @@ export default function StudentDashboard() {
     targetDate.setDate(today.getDate() + daysToAdd);
     return targetDate;
   };
-
+  
+  // Add useEffect to initialize data and check for first-time users
   useEffect(() => {
-    fetchData();
-  }, [supabase]);
+    const fetchInitialData = async () => {
+      try {
+        await fetchData();
+        await fetchAvailableSlots();
+        
+        // Check if user has seen welcome overlay before
+        const hasSeenWelcomeOverlay = localStorage.getItem('hasSeenWelcomeOverlay');
+        if (!hasSeenWelcomeOverlay) {
+          // Set a small delay to ensure data is loaded first
+          setTimeout(() => {
+            setShowWelcomeOverlay(true);
+          }, 1000);
+        } else {
+          setHasSeenWelcome(true);
+        }
+      } catch (error) {
+        console.error('Error initializing dashboard:', error);
+      }
+    };
+    
+    fetchInitialData();
+  }, []);
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -423,7 +475,7 @@ export default function StudentDashboard() {
       }
     }
   };
-
+  
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -467,9 +519,6 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      {/* Onboarding Controller */}
-      <OnboardingController />
-      
       {/* Main content */}
       <main className="container mx-auto px-6 py-8">
         <motion.div 
@@ -488,79 +537,82 @@ export default function StudentDashboard() {
             </div>
           </motion.div>
 
-          {/* Stats overview */}
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Classrooms</p>
-                  <h3 className="text-xl font-medium">{classrooms.length}</h3>
+          {/* Stats */}
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {/* Classrooms - Larger card with gradient */}
+              <div className="md:col-span-4 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-[#1e1e1e] rounded-xl p-5 relative overflow-hidden shadow-lg transform transition-all duration-300 hover:translate-y-[-4px]">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-blue-500/5 rounded-full -ml-6 -mb-6"></div>
+                <div className="flex justify-between items-start relative z-10">
+                  <div>
+                    <p className="text-xs font-medium text-blue-400">CLASSROOMS</p>
+                    <h3 className="text-3xl font-bold mt-1">{classrooms.length}</h3>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                    <BookOpen size={20} className="text-blue-400" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-500/10">
-                  <Users className="text-blue-400" size={18} />
+                <div className="mt-6 flex items-center text-xs">
+                  <div className="flex-1 h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500/50 rounded-full" 
+                      style={{ width: classrooms.length > 0 ? '100%' : '0%' }}
+                    ></div>
+                  </div>
+                  <span className="ml-3 text-[#a0a0a0]">
+                    {classrooms.length === 0 ? 'No classrooms joined' : `${classrooms.length} classroom${classrooms.length > 1 ? 's' : ''}`}
+                  </span>
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
-                <p className="text-[#a0a0a0] text-xs">
-                  {classrooms.length > 0 ? 
-                    (classrooms.length + " active " + (classrooms.length === 1 ? 'classroom' : 'classrooms')) : 
-                    'No classrooms joined'}
+              
+              {/* Teams - Medium card with accent */}
+              <div className="md:col-span-3 bg-[#141414] border border-[#1e1e1e] rounded-xl p-5 relative overflow-hidden shadow-lg transform transition-all duration-300 hover:translate-y-[-4px]">
+                <div className="absolute top-0 left-0 h-1 w-2/3 bg-gradient-to-r from-indigo-500 to-indigo-500/0 rounded-t-xl"></div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-medium text-indigo-400">TEAMS</p>
+                    <h3 className="text-3xl font-bold mt-1">{teams.length}</h3>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <Users size={18} className="text-indigo-400" />
+                  </div>
+                </div>
+                <p className="text-xs text-[#a0a0a0] mt-6">
+                  {teams.length === 0 ? 'No teams joined' : `${teams.length} team${teams.length > 1 ? 's' : ''} joined`}
                 </p>
               </div>
-            </div>
-            
-            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Teams</p>
-                  <h3 className="text-xl font-medium">{teams.length}</h3>
+              
+              {/* Reviews - Medium card with accent */}
+              <div className="md:col-span-3 bg-[#141414] border border-[#1e1e1e] rounded-xl p-5 relative overflow-hidden shadow-lg transform transition-all duration-300 hover:translate-y-[-4px]">
+                <div className="absolute top-0 left-0 h-1 w-2/3 bg-gradient-to-r from-purple-500 to-purple-500/0 rounded-t-xl"></div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-medium text-purple-400">REVIEWS</p>
+                    <h3 className="text-3xl font-bold mt-1">{upcomingReviews.length}</h3>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <Calendar size={18} className="text-purple-400" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-purple-500/10">
-                  <Users className="text-purple-400" size={18} />
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
-                <p className="text-[#a0a0a0] text-xs">
-                  {teams.length > 0 ? 
-                    (teams.length + " active " + (teams.length === 1 ? 'team' : 'teams')) : 
-                    'No teams joined'}
+                <p className="text-xs text-[#a0a0a0] mt-6">
+                  {upcomingReviews.length === 0 ? 'No upcoming reviews' : `${upcomingReviews.length} review${upcomingReviews.length > 1 ? 's' : ''} scheduled`}
                 </p>
               </div>
-            </div>
-            
-            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Reviews</p>
-                  <h3 className="text-xl font-medium">{upcomingReviews.length}</h3>
+              
+              {/* Student ID - Smaller card with different shape */}
+              <div className="md:col-span-2 bg-[#141414] border border-[#1e1e1e] rounded-xl p-5 relative overflow-hidden shadow-lg transform transition-all duration-300 hover:translate-y-[-4px]">
+                <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-[#1a1a1a]/20 to-transparent"></div>
+                <div className="flex flex-col justify-center items-center relative z-10 text-center">
+                  <div className="w-9 h-9 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                    <User size={16} className="text-green-400" />
+                  </div>
+                  <p className="text-xs font-medium text-green-400">STUDENT ID</p>
+                  <h3 className="text-xl font-bold mt-1">{user?.roll_number || 'Not set'}</h3>
+                  <div className="mt-2 px-2 py-0.5 bg-green-500/10 rounded-full">
+                    <p className="text-[10px] text-green-400">{user?.roll_number ? 'Verified' : 'Not set'}</p>
+                  </div>
                 </div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-500/10">
-                  <Calendar className="text-green-400" size={18} />
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
-                <p className="text-[#a0a0a0] text-xs">
-                  {upcomingReviews.length > 0 ? 
-                    (upcomingReviews.length + " upcoming " + (upcomingReviews.length === 1 ? 'review' : 'reviews')) : 
-                    'No upcoming reviews'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-[#141414] p-5 rounded-lg border border-[#1e1e1e] hover:border-[#252525] transition-colors duration-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[#a0a0a0] text-xs uppercase tracking-wider font-medium mb-1">Student ID</p>
-                  <h3 className="text-xl font-medium truncate max-w-[120px]">{user?.roll_number || 'Not set'}</h3>
-                </div>
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-amber-500/10">
-                  <Clock className="text-amber-400" size={18} />
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-[#1e1e1e]">
-                <p className="text-[#a0a0a0] text-xs">
-                  {user?.roll_number ? 'Student ID verified' : 'ID not set'}
-                </p>
               </div>
             </div>
           </motion.div>
@@ -894,6 +946,99 @@ export default function StudentDashboard() {
       </main>
 
       <AnimatePresence>
+        {/* Welcome Overlay for First-time Users */}
+        {showWelcomeOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-gradient-to-br from-[#141414] to-[#0a0a0a] border border-[#252525] rounded-xl w-full max-w-xl overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 md:p-8">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">Welcome to Review Scheduler!</h2>
+                    <p className="text-[#a0a0a0] mt-2">Let's get you set up for your project reviews</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowWelcomeOverlay(false);
+                      localStorage.setItem('hasSeenWelcomeOverlay', 'true');
+                      setHasSeenWelcome(true);
+                    }}
+                    className="w-8 h-8 rounded-full bg-[#1e1e1e] hover:bg-[#252525] flex items-center justify-center transition-colors duration-200"
+                  >
+                    <X size={14} className="text-[#a0a0a0]" />
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-400 font-bold">1</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">Join a Classroom</h3>
+                      <p className="text-[#a0a0a0] text-sm">First, join your professor's classroom using the invitation code they provided.</p>
+                      <button 
+                        onClick={() => {
+                          setShowWelcomeOverlay(false);
+                          localStorage.setItem('hasSeenWelcomeOverlay', 'true');
+                          setHasSeenWelcome(true);
+                          setShowJoinForm(true);
+                        }}
+                        className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors duration-200"
+                      >
+                        Join a Classroom
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-indigo-400 font-bold">2</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">Create or Join a Team</h3>
+                      <p className="text-[#a0a0a0] text-sm">After joining a classroom, you can create your own team or join an existing one.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-purple-400 font-bold">3</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">Book Review Slots</h3>
+                      <p className="text-[#a0a0a0] text-sm">Once you're in a team, you can book slots for your project reviews with faculty.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 pt-6 border-t border-[#1e1e1e] flex justify-between items-center">
+                  <p className="text-xs text-[#a0a0a0]">You can access help anytime from your profile</p>
+                  <button 
+                    onClick={() => {
+                      setShowWelcomeOverlay(false);
+                      localStorage.setItem('hasSeenWelcomeOverlay', 'true');
+                      setHasSeenWelcome(true);
+                    }}
+                    className="px-4 py-2 bg-[#1e1e1e] hover:bg-[#252525] text-white text-sm rounded-md transition-colors duration-200"
+                  >
+                    Get Started
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        
         {successMessage && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
@@ -1169,6 +1314,7 @@ export default function StudentDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+      </main>
     </div>
   );
 }

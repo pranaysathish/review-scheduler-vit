@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Check, X, Loader2 } from 'lucide-react';
+import { CheckCircle, X, RefreshCw } from 'lucide-react';
 
 interface JoinTeamFormProps {
   classroomId: number;
@@ -27,6 +27,9 @@ export default function JoinTeamForm({ classroomId, onSuccess, onCancel }: JoinT
       setError('Please enter a team invitation code');
       return;
     }
+    
+    // Format the invitation code (uppercase, remove spaces)
+    const formattedCode = invitationCode.trim().toUpperCase().replace(/\s+/g, '');
 
     setIsSubmitting(true);
     setError(null);
@@ -53,8 +56,8 @@ export default function JoinTeamForm({ classroomId, onSuccess, onCancel }: JoinT
       // Check if team exists
       const { data: team, error: teamError } = await supabase
         .from('teams')
-        .select('id, name, classroom_id, max_members')
-        .eq('invitation_code', invitationCode.toUpperCase())
+        .select('id, name, classroom_id, max_members, project_title')
+        .eq('invitation_code', formattedCode)
         .single();
 
       if (teamError) {
@@ -131,14 +134,17 @@ export default function JoinTeamForm({ classroomId, onSuccess, onCancel }: JoinT
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="bg-gray-900 border border-gray-800 rounded-xl p-6"
+      className="bg-[#141414] border border-[#1e1e1e] rounded-lg p-6"
     >
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold">Join Team</h3>
+        <div>
+          <h3 className="text-xl font-medium">Join Team</h3>
+          <p className="text-sm text-[#a0a0a0] mt-1">Enter the invitation code to join an existing team</p>
+        </div>
         {onCancel && (
           <button 
             onClick={onCancel}
-            className="text-gray-400 hover:text-white"
+            className="text-[#a0a0a0] hover:text-white transition-colors duration-200"
           >
             <X size={20} />
           </button>
@@ -147,19 +153,22 @@ export default function JoinTeamForm({ classroomId, onSuccess, onCancel }: JoinT
 
       {success ? (
         <div className="flex flex-col items-center justify-center py-6">
-          <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-            <Check className="h-8 w-8 text-green-400" />
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
+            <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
           <h4 className="text-lg font-medium mb-2">Successfully joined team!</h4>
-          <p className="text-gray-400 text-center mb-6">
+          <p className="text-[#a0a0a0] text-center mb-6">
             You have joined <span className="text-white font-medium">{teamName}</span>
+            {teamId && (
+              <span className="block mt-1 text-xs">You can now collaborate with your team members on your project</span>
+            )}
           </p>
           
           <button
             onClick={() => {
               if (onSuccess && teamId) onSuccess(teamId);
             }}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200"
           >
             View Team
           </button>
@@ -167,50 +176,66 @@ export default function JoinTeamForm({ classroomId, onSuccess, onCancel }: JoinT
       ) : (
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <label htmlFor="invitationCode" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="invitationCode" className="block text-sm font-medium mb-1">
               Team Invitation Code
             </label>
-            <input
-              type="text"
-              id="invitationCode"
-              value={invitationCode}
-              onChange={(e) => setInvitationCode(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Enter the invitation code (e.g., AB12CD)"
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                id="invitationCode"
+                value={invitationCode}
+                onChange={(e) => {
+                  setInvitationCode(e.target.value);
+                  if (error) setError(null); // Clear error when user types
+                }}
+                className="w-full bg-[#1a1a1a] border border-[#252525] rounded-md px-4 py-2 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                placeholder="Enter the invitation code (e.g., AB12CD)"
+                disabled={isSubmitting}
+                autoFocus
+                maxLength={10}
+              />
+              {invitationCode && (
+                <button 
+                  type="button" 
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#a0a0a0] hover:text-white transition-colors duration-200"
+                  onClick={() => setInvitationCode('')}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
             {error && (
-              <p className="mt-2 text-red-400 text-sm">{error}</p>
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2 rounded-md text-sm mt-4">
+                {error}
+              </div>
             )}
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-3 pt-4">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="mr-4 px-4 py-2 text-gray-300 hover:text-white"
+                className="px-4 py-2 border border-[#252525] rounded-md text-[#a0a0a0] hover:bg-[#1a1a1a] transition-colors duration-200"
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
             )}
-            <motion.button
+            <button
               type="submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center min-w-[100px]"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
+                  <RefreshCw size={16} className="animate-spin mr-2" />
                   Joining...
                 </>
               ) : (
                 'Join Team'
               )}
-            </motion.button>
+            </button>
           </div>
         </form>
       )}
