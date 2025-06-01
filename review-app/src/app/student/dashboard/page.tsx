@@ -10,7 +10,7 @@ import './onboarding.css';
 import { Plus, Calendar, Users, FileText, Clock, X, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import LogoutButton from '@/components/auth/logout-button';
-import JoinClassroomForm from '@/components/student/join-classroom-form';
+import EnhancedJoinClassroomModal from '@/components/student/enhanced-join-classroom-modal';
 import CreateTeamForm from '@/components/student/create-team-form';
 import JoinTeamForm from '@/components/student/join-team-form';
 import ClassroomCard from '@/components/student/classroom-card';
@@ -694,23 +694,16 @@ export default function StudentDashboard() {
             </div>
           </motion.div>
 
-          {/* Join Classroom Form */}
+          {/* Enhanced Join Classroom Modal */}
           <AnimatePresence>
             {showJoinForm && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="mb-8"
-              >
-                <JoinClassroomForm 
-                  onSuccess={() => {
-                    setShowJoinForm(false);
-                    fetchData();
-                  }}
-                  onCancel={() => setShowJoinForm(false)}
-                />
-              </motion.div>
+              <EnhancedJoinClassroomModal
+                onSuccess={() => {
+                  setShowJoinForm(false);
+                  fetchData();
+                }}
+                onClose={() => setShowJoinForm(false)}
+              />
             )}
           </AnimatePresence>
 
@@ -721,7 +714,13 @@ export default function StudentDashboard() {
                 <h3 className="text-lg font-medium">Your Classrooms</h3>
                 <p className="text-[#a0a0a0] text-xs mt-1">Manage your enrolled classrooms</p>
               </div>
-              {/* Join button removed */}
+              <button
+                onClick={() => setShowJoinForm(true)}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center gap-1.5"
+              >
+                <Plus size={12} />
+                Join Classroom
+              </button>
             </div>
             
             {classrooms.length === 0 ? (
@@ -731,7 +730,13 @@ export default function StudentDashboard() {
                 </div>
                 <h4 className="text-base font-medium mb-2">No classrooms joined yet</h4>
                 <p className="text-[#a0a0a0] text-sm mb-4">Join a classroom to start creating or joining teams</p>
-                {/* Join Classroom button removed */}
+                <button
+                  onClick={() => setShowJoinForm(true)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center gap-2 mx-auto"
+                >
+                  <Plus size={14} />
+                  Join Classroom
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
